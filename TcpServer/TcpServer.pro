@@ -10,15 +10,19 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
+    mytcpserver.cpp \
+    mytcpsocket.cpp \
     protocol.cpp \
-    tcpclient.cpp
+    tcpserver.cpp
 
 HEADERS += \
+    mytcpserver.h \
+    mytcpsocket.h \
     protocol.h \
-    tcpclient.h
+    tcpserver.h
 
 FORMS += \
-    tcpclient.ui
+    tcpserver.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
