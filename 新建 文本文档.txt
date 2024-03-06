@@ -1,0 +1,11 @@
+服务端的通讯逻辑：
+1.MyTcpServer对象（继承于QTcpServer）调用listen()函数开始监听；
+2.当有连接连上来时，调用MyTcpServer的incomingConnection()函数；
+3.在incomingConnection()函数中，创建一个socket: MyTcpSocket对象，将次socket设置为发起连接那一方的套接字描述符；
+4.将此套接字描述符加入套接字列表；
+5.当套接字MyTcpSocket对象准备好接收新的数据(通常是客户端发来了数据)时，MyTcpSocket对象会发出readyRead()信号，该信号由该MyTcpSocket对象本身的槽函数recvMsg()处理(这是我们由connect函数所设置)。
+6.recvMsg()调用read()函数接收消息，存入服务器端的主存里。
+
+客户端通讯逻辑：
+1.用一个QTcpSocket对象connectToHost()到服务器；
+2.将要发送的数据转换为PDU格式，并调用该QTcpSocket对象的write()函数写到套接字。
