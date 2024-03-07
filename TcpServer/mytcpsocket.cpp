@@ -5,9 +5,11 @@ MyTcpSocket::MyTcpSocket(QObject *parent)
     : QTcpSocket{parent}
 {
     //this发出的信号readyRead()由this的槽函数recvMsg()来处理。
+    //readyRead()信号是当套接字收到数据时，由QTcpSocket对象发出的。
     connect(this,SIGNAL(readyRead()),this,SLOT(recvMsg()));
 }
 
+//MyTcpSocket继承的是QTcpSocket
 //当socket有数据过来了就会发出readyRead()信号，用它本身的槽函数recvMsg()来处理
 void MyTcpSocket::recvMsg()
 {
@@ -24,7 +26,42 @@ void MyTcpSocket::recvMsg()
 
     //通过实际消息长度产生一个pdu来接收剩余数据
     PDU* pdu = mkPDU(uiMsgLen);
+    //读入除uiPDULen字段之外的其他消息内容
     this->read((char*)pdu+sizeof(uint),uiPDULen-sizeof(uint));
     qDebug() << pdu->uiMsgType << (char*)(pdu->caMsg);
+
+    switch(pdu->uiMsgType)
+    {
+        case ENUM_MSG_TYPE_REGIST_REQUEST:
+        {
+            char caName[32] = {'\0'};
+            char caPwd[32] = {'\0'};
+            strncpy(caName,pdu->caData,32);
+            strncpy(caPwd,pdu->caData+32,32);
+            qDebug() << "服务端处理出的用户名字为:" << caName << "密码为:" << caPwd << pdu->uiMsgType;
+            bool ret = OpeDB::getInstance().handleResigt(caName,caPwd);
+            //对注册请求的回复无非就是注册成功或注册失败，用caData的64字节足够了。
+            PDU* respdu = mkPDU(0);
+            respdu->uiMsgType = ENUM_MSG_TYPE_REGIST_RESPOND;
+            if( ret )
+            {
+                strcpy(respdu->caData,REGIST_OK);
+            }
+            else
+            {
+                strcpy(respdu->caData,REGIST_FAILED);
+            }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+            break;
+        }
+        default: break;
+    }
+    free(pdu);
+    pdu = NULL;
+
+
+
 
 }

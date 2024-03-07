@@ -1,9 +1,25 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-
-
 typedef unsigned int uint;
+
+#define REGIST_OK "regist ok"
+#define REGIST_FAILED "regist failed: name existed"
+
+
+//消息类型的枚举
+enum ENUM_MSG_TYPE
+{
+    ENUM_MSG_TYPE_MIN = 0,
+
+    ENUM_MSG_TYPE_REGIST_REQUEST = 1,       //注册请求
+    ENUM_MSG_TYPE_REGIST_RESPOND = 2,       //注册回复
+
+    ENUM_MSG_TYPE_MAX = 0x00ffffff,
+
+
+
+};
 
 //通讯协议
 struct PDU

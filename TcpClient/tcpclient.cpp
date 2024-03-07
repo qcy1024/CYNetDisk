@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QHostAddress>
 #include <QMessageBox>
+#include <QString>
 
 TcpClient::TcpClient(QWidget *parent)
     : QWidget(parent)
@@ -19,6 +20,7 @@ TcpClient::TcpClient(QWidget *parent)
     //四个参数分别是：信号发送方、发送的信号、信号接收方、接收方的信号处理函数
     connect(&m_tcpSocket,SIGNAL(connected()),this,SLOT(showConnect()));
 
+    connect(&m_tcpSocket,SIGNAL(readyRead()),this,SLOT(recvMsg()));
 
     //连接服务器
     //connectToHost第一个参数是QHostAddress类型的服务器IP，第二个是整型的端口号
@@ -58,6 +60,46 @@ void TcpClient::showConnect()
     QMessageBox::information(this,"连接服务器","连接服务器成功");
 }
 
+void TcpClient::recvMsg()
+{
+    qDebug() << m_tcpSocket.bytesAvailable();
+    //服务器端从套接字接收数据时，先读数据的总大小，用uiPUDLen保存
+    uint uiPDULen = 0;
+    //read的第一个参数要求为char*类型，含义是数据的存放位置，
+    //read的第二个参数sizeof(uint)含义是接收的字节数。
+    //sizeof(uint)为4个字节，这接收的4个字节的内容就是此次接收的消息的总大小。
+    m_tcpSocket.read((char*)&uiPDULen,sizeof(uint));
+
+    //根据总的消息大小计算实际有效消息大小。
+    uint uiMsgLen = uiPDULen - sizeof(PDU);
+
+    //通过实际消息长度产生一个pdu来接收剩余数据
+    PDU* pdu = mkPDU(uiMsgLen);
+    //读入除uiPDULen字段之外的其他消息内容
+    m_tcpSocket.read((char*)pdu+sizeof(uint),uiPDULen-sizeof(uint));
+    qDebug() << pdu->uiMsgType << (char*)(pdu->caMsg);
+
+    switch(pdu->uiMsgType)
+    {
+        case ENUM_MSG_TYPE_REGIST_RESPOND:
+        {
+            if( strcmp(pdu->caData,REGIST_OK) == 0 )
+            {
+                QMessageBox::information(this,"注册",REGIST_OK);
+            }
+            else if( strcmp(pdu->caData,REGIST_FAILED) == 0 )
+            {
+                QMessageBox::information(this,"注册",REGIST_FAILED);
+            }
+            break;
+        }
+        default: break;
+    }
+    free(pdu);
+    pdu = NULL;
+}
+
+#if 0
 //ui界面上的“发送”按钮的触发函数
 void TcpClient::on_send_pb_clicked()
 {
@@ -82,5 +124,42 @@ void TcpClient::on_send_pb_clicked()
         QMessageBox::warning(this,"信息发送","发送的信息不能为空");
 
     }
+}
+#endif
+
+//登录按钮点击操作触发
+void TcpClient::on_login_pb_clicked()
+{
+
+}
+
+//注册按钮点击
+//客户端点击注册后，客户端程序获取用户输入的用户名及密码，将其通过套接字发往服务器
+void TcpClient::on_regist_pb_clicked()
+{
+    QString strName = ui->name_le->text();
+    QString strPwd = ui->pwd_le->text();
+    if( !strName.isEmpty() && !strPwd.isEmpty() )
+    {
+        //用户名和密码信息放在协议数据单元的caData里面就行了，不用放在caMsg里面，所以消息实体的长度是0.
+        PDU *pdu = mkPDU(0);
+        pdu->uiMsgType = ENUM_MSG_TYPE_REGIST_REQUEST;
+        //caData的前32个字节存放name，后32个字节存放pwd
+        strncpy(pdu->caData,strName.toStdString().c_str(),32);
+        strncpy(pdu->caData+32,strPwd.toStdString().c_str(),32);
+        m_tcpSocket.write((char*)pdu,pdu->uiPDULen);
+        free(pdu);
+        pdu = NULL;
+    }
+    else
+    {
+        QMessageBox::critical(this,"注册","注册失败,用户名或密码为空");
+    }
+}
+
+//注销按钮点击操作触发
+void TcpClient::on_cancel_pb_clicked()
+{
+
 }
 

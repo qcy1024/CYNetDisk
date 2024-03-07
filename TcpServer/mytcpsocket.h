@@ -3,6 +3,7 @@
 
 #include <QTcpSocket>
 #include "protocol.h"
+#include "opedb.h"
 
 //MyTcpSocket继承了QTcpSocket,可以直接用QTcpSocket提供的功能。
 class MyTcpSocket : public QTcpSocket
