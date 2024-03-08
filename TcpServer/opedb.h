@@ -1,6 +1,8 @@
 #ifndef OPEDB_H
 #define OPEDB_H
 
+/*所有对数据库的操作都封装到该类OpeDB里面*/
+
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -19,7 +21,9 @@ public:
     void init();
     ~OpeDB();
 
-    bool handleResigt(const char* name,const char* pwd);    //处理注册
+    bool handleRegist(const char* name,const char* pwd);    //处理注册
+    bool handleLogin(const char* name,const char* pwd);    //处理登录
+    void handleOffline(const char* name);                  //处理客户端下线
 
 signals:
 

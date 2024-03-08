@@ -7,6 +7,14 @@ MyTcpSocket::MyTcpSocket(QObject *parent)
     //this发出的信号readyRead()由this的槽函数recvMsg()来处理。
     //readyRead()信号是当套接字收到数据时，由QTcpSocket对象发出的。
     connect(this,SIGNAL(readyRead()),this,SLOT(recvMsg()));
+
+    //客户端下线时，MyTcpSocket对象就会发出一个disconnected()信号。
+    connect(this,SIGNAL(disconnected()),this,SLOT(clientOffline()));
+}
+
+QString MyTcpSocket::getName()
+{
+    return m_strName;
 }
 
 //MyTcpSocket继承的是QTcpSocket
@@ -32,6 +40,7 @@ void MyTcpSocket::recvMsg()
 
     switch(pdu->uiMsgType)
     {
+        //注册请求
         case ENUM_MSG_TYPE_REGIST_REQUEST:
         {
             char caName[32] = {'\0'};
@@ -39,7 +48,7 @@ void MyTcpSocket::recvMsg()
             strncpy(caName,pdu->caData,32);
             strncpy(caPwd,pdu->caData+32,32);
             qDebug() << "服务端处理出的用户名字为:" << caName << "密码为:" << caPwd << pdu->uiMsgType;
-            bool ret = OpeDB::getInstance().handleResigt(caName,caPwd);
+            bool ret = OpeDB::getInstance().handleRegist(caName,caPwd);
             //对注册请求的回复无非就是注册成功或注册失败，用caData的64字节足够了。
             PDU* respdu = mkPDU(0);
             respdu->uiMsgType = ENUM_MSG_TYPE_REGIST_RESPOND;
@@ -56,12 +65,40 @@ void MyTcpSocket::recvMsg()
             respdu = NULL;
             break;
         }
+        //登录请求
+        case ENUM_MSG_TYPE_LOGIN_REQUEST:
+        {
+            char caName[32] = {'\0'};
+            char caPwd[32] = {'\0'};
+            strncpy(caName,pdu->caData,32);
+            strncpy(caPwd,pdu->caData+32,32);
+            bool ret = OpeDB::getInstance().handleLogin(caName,caPwd);
+            PDU* respdu = mkPDU(0);
+            respdu->uiMsgType = ENUM_MSG_TYPE_LOGIN_RESPOND;
+            if( ret )
+            {
+                strcpy(respdu->caData,LOGIN_OK);
+                m_strName = caName;
+            }
+            else
+            {
+                strcpy(respdu->caData,LOGIN_FAILED);
+            }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+            break;
+        }
         default: break;
     }
     free(pdu);
     pdu = NULL;
 
+}
 
-
-
+void MyTcpSocket::clientOffline()
+{
+    OpeDB::getInstance().handleOffline(m_strName.toStdString().c_str());
+    //发出信号offline
+    emit offline(this);
 }

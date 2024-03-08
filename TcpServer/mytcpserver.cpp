@@ -20,5 +20,25 @@ void MyTcpServer::incomingConnection(qintptr socketDescriptor)
     //设置套接字描述符为发起连接的那一方的套接字描述符
     pTcpSocket->setSocketDescriptor(socketDescriptor);
     m_tcpSocketList.append(pTcpSocket);
+    connect(pTcpSocket,SIGNAL(offline(MyTcpSocket*)),this,SLOT(deleteSocket(MyTcpSocket*)));
+}
 
+//槽函数和信号的参数要一样(这个槽函数是要接收mytcpsocket的offline信号)
+void MyTcpServer::deleteSocket(MyTcpSocket *mysocket)
+{
+    QList<MyTcpSocket*>::Iterator iter = m_tcpSocketList.begin();
+    for( ; iter!=m_tcpSocketList.end(); ++iter )
+    {
+        if( mysocket == *iter )
+        {
+            delete *iter;
+            *iter = NULL;
+            m_tcpSocketList.erase(iter);
+            break;
+        }
+    }
+    for( int i=0; i<m_tcpSocketList.size(); ++i )
+    {
+        qDebug() << m_tcpSocketList.at(i)->getName();
+    }
 }

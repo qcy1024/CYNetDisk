@@ -81,6 +81,7 @@ void TcpClient::recvMsg()
 
     switch(pdu->uiMsgType)
     {
+        //注册回复
         case ENUM_MSG_TYPE_REGIST_RESPOND:
         {
             if( strcmp(pdu->caData,REGIST_OK) == 0 )
@@ -90,6 +91,20 @@ void TcpClient::recvMsg()
             else if( strcmp(pdu->caData,REGIST_FAILED) == 0 )
             {
                 QMessageBox::information(this,"注册",REGIST_FAILED);
+            }
+            break;
+        }
+
+        //登录回复
+        case ENUM_MSG_TYPE_LOGIN_RESPOND:
+        {
+            if( strcmp(pdu->caData,LOGIN_OK) == 0 )
+            {
+                QMessageBox::information(this,"登录",LOGIN_OK);
+            }
+            else if( strcmp(pdu->caData,LOGIN_FAILED) == 0 )
+            {
+                QMessageBox::information(this,"登录",LOGIN_FAILED);
             }
             break;
         }
@@ -127,13 +142,30 @@ void TcpClient::on_send_pb_clicked()
 }
 #endif
 
-//登录按钮点击操作触发
+//登录按钮触发函数
 void TcpClient::on_login_pb_clicked()
 {
-
+    QString strName = ui->name_le->text();
+    QString strPwd = ui->pwd_le->text();
+    if( !strName.isEmpty() && !strPwd.isEmpty() )
+    {
+        //用户名和密码信息放在协议数据单元的caData里面就行了，不用放在caMsg里面，所以消息实体的长度是0.
+        PDU *pdu = mkPDU(0);
+        pdu->uiMsgType = ENUM_MSG_TYPE_LOGIN_REQUEST;
+        //caData的前32个字节存放name，后32个字节存放pwd
+        strncpy(pdu->caData,strName.toStdString().c_str(),32);
+        strncpy(pdu->caData+32,strPwd.toStdString().c_str(),32);
+        m_tcpSocket.write((char*)pdu,pdu->uiPDULen);
+        free(pdu);
+        pdu = NULL;
+    }
+    else
+    {
+        QMessageBox::critical(this,"登录","登录失败,用户名或密码为空");
+    }
 }
 
-//注册按钮点击
+//注册按钮触发函数(click)
 //客户端点击注册后，客户端程序获取用户输入的用户名及密码，将其通过套接字发往服务器
 void TcpClient::on_regist_pb_clicked()
 {
