@@ -101,6 +101,9 @@ void TcpClient::recvMsg()
             if( strcmp(pdu->caData,LOGIN_OK) == 0 )
             {
                 QMessageBox::information(this,"登录",LOGIN_OK);
+                //操作界面show之后，会新弹出一个操作界面，原来的登录界面不会关闭
+                OpeWidget::getInstance().show();
+                this->hide();
             }
             else if( strcmp(pdu->caData,LOGIN_FAILED) == 0 )
             {

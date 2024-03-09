@@ -6,6 +6,8 @@
 #include <QFile>
 #include <QTcpSocket>
 #include "protocol.h"
+//登录成功时显示操作界面
+#include "opewidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
