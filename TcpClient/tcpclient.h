@@ -26,6 +26,9 @@ public:
     //将配置文件的内容读到该类自身的成员中
     void loadConfig();
 
+    static TcpClient& getInstance();
+    QTcpSocket& getTcpSocket();
+
 public slots:
     void showConnect();
     void recvMsg();

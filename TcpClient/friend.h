@@ -17,12 +17,15 @@ class Friend : public QWidget
     Q_OBJECT
 public:
     explicit Friend(QWidget *parent = nullptr);
+    void showAllOnlineUsr(PDU* pdu);
+
+    QString m_strSearchName;    //临时的名字，用于查找时的客户端提示
 
 signals:
 
 public slots:
     void showOnline();
-
+    void searchUsr();
 
 
 private:
@@ -38,6 +41,9 @@ private:
     QPushButton* m_pPrivateChatPB;  //私聊按钮
 
     Online* m_pOnline;
+
+
+
 };
 
 #endif // FRIEND_H

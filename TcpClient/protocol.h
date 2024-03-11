@@ -7,7 +7,9 @@ typedef unsigned int uint;
 #define REGIST_FAILED "regist failed: name existed"
 #define LOGIN_OK "login ok"
 #define LOGIN_FAILED "login failed"
-
+#define SEARCH_USR_NOT_EXIST "no such people"
+#define SEARCH_USR_ONLINE "online"
+#define SEARCH_USR_OFFLINE "offline"
 
 //消息类型的枚举
 enum ENUM_MSG_TYPE
@@ -19,6 +21,12 @@ enum ENUM_MSG_TYPE
 
     ENUM_MSG_TYPE_LOGIN_REQUEST = 3,       //登录请求
     ENUM_MSG_TYPE_LOGIN_RESPOND = 4,       //登录回复
+
+    ENUM_MSG_TYPE_ALL_ONLINE_REQUEST = 5,       //查看在线用户请求
+    ENUM_MSG_TYPE_ALL_ONLINE_RESPOND = 6,       //查看在线用户回复
+
+    ENUM_MSG_TYPE_SEARCH_USR_REQUEST = 7,       //搜索用户请求
+    ENUM_MSG_TYPE_SEARCH_USR_RESPOND = 8,       //搜索用户回复
 
     ENUM_MSG_TYPE_MAX = 0x00ffffff,
 

@@ -31,8 +31,9 @@ void MyTcpServer::deleteSocket(MyTcpSocket *mysocket)
     {
         if( mysocket == *iter )
         {
-            delete *iter;
-            *iter = NULL;
+            // delete *iter;
+            // *iter = NULL;
+            (*iter)->deleteLater();
             m_tcpSocketList.erase(iter);
             break;
         }

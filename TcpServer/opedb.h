@@ -7,6 +7,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QtSql>
+#include <QStringList>
 
 class OpeDB : public QObject
 {
@@ -24,6 +25,9 @@ public:
     bool handleRegist(const char* name,const char* pwd);    //处理注册
     bool handleLogin(const char* name,const char* pwd);    //处理登录
     void handleOffline(const char* name);                  //处理客户端下线
+    QStringList handleAllOnline();  //处理查看在线用户，将所有在线用户放在一个QStringList里面返回(字符串列表)
+    int handleSearchUsr(const char* name);  //查找用户
+
 
 signals:
 

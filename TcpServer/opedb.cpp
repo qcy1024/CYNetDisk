@@ -2,6 +2,7 @@
 #include <QMessageBox>
 #include <QDebug>
 
+
 OpeDB::OpeDB(QObject *parent)
     : QObject{parent}
 {
@@ -60,6 +61,7 @@ bool OpeDB::handleLogin(const char *name, const char *pwd)
 
 }
 
+//处理客户端下线
 void OpeDB::handleOffline(const char *name)
 {
     if( name == NULL )
@@ -70,6 +72,61 @@ void OpeDB::handleOffline(const char *name)
     qDebug() << "handleOffline中，data为" << data;
     QSqlQuery query;
     query.exec(data);
+}
+
+//查询所有在线用户
+QStringList OpeDB::handleAllOnline()
+{
+    QString data = QString("select name from usrInfo where online=1");
+    QSqlQuery query;
+    query.exec(data);
+
+    QStringList result;
+    result.clear();
+
+    while( query.next() )
+    {
+        result.append(query.value(0).toString());
+    }
+
+    // 调试信息
+    // qDebug() << "handleAllOnline()中，result为:";
+    // for( int i=0; i<result.size(); ++i )
+    // {
+    //     qDebug() << result.at(i);
+    // }
+    return result;
+}
+
+int OpeDB::handleSearchUsr(const char *name)
+{
+    if( name == NULL )
+    {
+        return -1;
+    }
+
+    QString data = QString("select online from usrInfo where name=\'%1\'").arg(name);
+
+    QSqlQuery query;
+    query.exec(data);
+
+    if( query.next() )
+    {
+        int ret = query.value(0).toInt();
+        if( ret == 1 )
+        {
+            return 1;
+        }
+        else if( ret == 0 )
+        {
+            return 0;
+        }
+    }
+    //找的这个人不存在
+    else
+    {
+        return -1;
+    }
 }
 
 OpeDB &OpeDB::getInstance()

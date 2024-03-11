@@ -55,6 +55,17 @@ void TcpClient::loadConfig()
     }
 }
 
+TcpClient &TcpClient::getInstance()
+{
+    static TcpClient instance;
+    return instance;
+}
+
+QTcpSocket &TcpClient::getTcpSocket()
+{
+    return m_tcpSocket;
+}
+
 void TcpClient::showConnect()
 {
     QMessageBox::information(this,"连接服务器","连接服务器成功");
@@ -111,7 +122,39 @@ void TcpClient::recvMsg()
             }
             break;
         }
-        default: break;
+
+        //查看在线用户回复
+        case ENUM_MSG_TYPE_ALL_ONLINE_RESPOND:
+        {
+            //操作界面获得好友界面，并调用好友界面的showALLOnlineUsr()函数。
+            OpeWidget::getInstance().getFriend()->showAllOnlineUsr(pdu);
+
+            break;
+        }
+
+        //查找回复
+        case ENUM_MSG_TYPE_SEARCH_USR_RESPOND:
+        {
+            if( strcmp(SEARCH_USR_NOT_EXIST,pdu->caData) == 0 )
+            {
+                QMessageBox::information(this,"搜索",QString("%1:not exist!")
+                    .arg(OpeWidget::getInstance().getFriend()->m_strSearchName));
+            }
+            else if( strcmp(SEARCH_USR_ONLINE,pdu->caData) == 0 )
+            {
+                QMessageBox::information(this,"搜索",QString("%1:online")
+                    .arg(OpeWidget::getInstance().getFriend()->m_strSearchName));
+            }
+            if( strcmp(SEARCH_USR_OFFLINE,pdu->caData) == 0 )
+            {
+                QMessageBox::information(this,"搜索",QString("%1:offline")
+                    .arg(OpeWidget::getInstance().getFriend()->m_strSearchName));
+            }
+
+            break;
+        }
+        default:
+            break;
     }
     free(pdu);
     pdu = NULL;

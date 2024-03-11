@@ -1,4 +1,8 @@
 #include "friend.h"
+#include "protocol.h"
+#include "tcpclient.h"
+#include <QInputDialog>
+#include <QDebug>
 
 Friend::Friend(QWidget *parent)
     : QWidget{parent}
@@ -47,17 +51,53 @@ Friend::Friend(QWidget *parent)
     connect(m_pShowOnlineUsrPB,SIGNAL(clicked(bool)),
             this,SLOT(showOnline()));
 
-
+    connect(m_pSearchUsrPB,SIGNAL(clicked(bool))
+            ,this,SLOT(searchUsr()));
 }
 
+void Friend::showAllOnlineUsr(PDU *pdu)
+{
+    if( pdu == NULL )
+    {
+        return ;
+    }
+    m_pOnline->showUsr(pdu);
+
+    return;
+}
+
+//点击"查看在线用户"的触发函数
 void Friend::showOnline()
 {
     if( m_pOnline->isHidden() )
     {
         m_pOnline->show();
+        PDU* pdu = mkPDU(0);
+        pdu->uiMsgType = ENUM_MSG_TYPE_ALL_ONLINE_REQUEST;
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+        free(pdu);
+        pdu = NULL;
     }
     else
     {
         m_pOnline->hide();
+    }
+}
+
+//点击"查找用户"的触发函数
+void Friend::searchUsr()
+{
+    //getText()的返回值就是用户在输入框里输入的内容
+    m_strSearchName = QInputDialog::getText(this,"搜索","用户名");
+    if( !m_strSearchName.isEmpty() )
+    {
+        //qDebug() << name;
+        //要搜索的用户名放在caData里面就行了。
+        PDU* pdu = mkPDU(0);
+        memcpy(pdu->caData,m_strSearchName.toStdString().c_str(),m_strSearchName.size());
+        pdu->uiMsgType = ENUM_MSG_TYPE_SEARCH_USR_REQUEST;
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+        free(pdu);
+        pdu = NULL;
     }
 }

@@ -31,3 +31,8 @@ OpeWidget &OpeWidget::getInstance()
     static OpeWidget instance;
     return instance;
 }
+
+Friend *OpeWidget::getFriend()
+{
+    return m_pFriend;
+}

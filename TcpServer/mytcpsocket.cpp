@@ -89,7 +89,54 @@ void MyTcpSocket::recvMsg()
             respdu = NULL;
             break;
         }
-        default: break;
+        //查看在线用户请求
+        case ENUM_MSG_TYPE_ALL_ONLINE_REQUEST:
+        {
+            QStringList ret = OpeDB::getInstance().handleAllOnline();
+            //每一个在线用户的用户名占32字节，一共有ret.size()个在线用户
+            uint uiMsgLen = ret.size() * 32;
+            PDU* respdu = mkPDU(uiMsgLen);
+            respdu->uiMsgType = ENUM_MSG_TYPE_ALL_ONLINE_RESPOND;
+            for( int i=0; i<ret.size(); ++i )
+            {
+                //注意(char*)很关键，因为caMsg是int的指针，只有强制
+                //转换成char*，才能正确计算得到地址
+                memcpy((char*)(respdu->caMsg)+i*32
+                       ,ret.at(i).toStdString().c_str()
+                       ,ret.at(i).size());
+                //qDebug() << "case为ALL_ONLINE_REQUEST时，回复的caMsg为:" << (char*)respdu->caMsg ;
+            }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+
+            break;
+        }
+        case ENUM_MSG_TYPE_SEARCH_USR_REQUEST:
+        {
+            int ret = OpeDB::getInstance().handleSearchUsr(pdu->caData);
+            PDU* respdu = mkPDU(0);
+            respdu->uiMsgType = ENUM_MSG_TYPE_SEARCH_USR_RESPOND;
+            if( ret == -1 )
+            {
+                strcpy(respdu->caData,SEARCH_USR_NOT_EXIST);
+            }
+            else if( ret == 1 )
+            {
+                strcpy(respdu->caData,SEARCH_USR_ONLINE);
+            }
+            else if( ret == 0 )
+            {
+                strcpy(respdu->caData,SEARCH_USR_OFFLINE);
+            }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+
+            break;
+        }
+        default:
+            break;
     }
     free(pdu);
     pdu = NULL;
