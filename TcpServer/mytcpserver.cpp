@@ -23,6 +23,24 @@ void MyTcpServer::incomingConnection(qintptr socketDescriptor)
     connect(pTcpSocket,SIGNAL(offline(MyTcpSocket*)),this,SLOT(deleteSocket(MyTcpSocket*)));
 }
 
+//通过用户的name找到他的套接字，并将pdu发送给他
+void MyTcpServer::resend(const char *pername, PDU *pdu)
+{
+    if( pername == NULL || pdu == NULL )
+    {
+        return;
+    }
+    QString strName = pername;
+    for( int i=0; i<m_tcpSocketList.size(); ++i )
+    {
+        if( strName == m_tcpSocketList.at(i)->getName() )
+        {
+            m_tcpSocketList.at(i)->write((char*)pdu,pdu->uiPDULen);
+            break;
+        }
+    }
+}
+
 //槽函数和信号的参数要一样(这个槽函数是要接收mytcpsocket的offline信号)
 void MyTcpServer::deleteSocket(MyTcpSocket *mysocket)
 {

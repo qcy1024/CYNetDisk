@@ -1,5 +1,6 @@
 #include "mytcpsocket.h"
 #include <QDebug>
+#include "mytcpserver.h"
 
 MyTcpSocket::MyTcpSocket(QObject *parent)
     : QTcpSocket{parent}
@@ -112,6 +113,7 @@ void MyTcpSocket::recvMsg()
 
             break;
         }
+        //搜索好友请求
         case ENUM_MSG_TYPE_SEARCH_USR_REQUEST:
         {
             int ret = OpeDB::getInstance().handleSearchUsr(pdu->caData);
@@ -135,9 +137,96 @@ void MyTcpSocket::recvMsg()
 
             break;
         }
+        //加好友请求
+        case ENUM_MSG_TYPE_ADD_FRIEND_REQUEST:
+        {
+            char caPerName[32] = {'\0'};
+            char caName[32] = {'\0'};
+            strncpy(caPerName,pdu->caData,32);
+            strncpy(caName,pdu->caData+32,32);
+            int ret = OpeDB::getInstance().handleAddFriend(caPerName,caName);
+
+            PDU* respdu = NULL;
+            //未知系统错误
+            if( ret == -1 )
+            {
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_RESPOND;
+                strcpy(respdu->caData,UNKNOW_ERROR);
+                write((char*)respdu,respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+            }
+            //已经是好友了
+            else if( ret == 0 )
+            {
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_RESPOND;
+                strcpy(respdu->caData,FRIEND_EXISTED);
+                write((char*)respdu,respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+            }
+            //用户在线
+            else if( ret == 1 )
+            {
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_REQUEST;
+                memcpy(respdu->caData,caPerName,32);
+                memcpy(respdu->caData+32,caName,32);
+                //A要加B，PerName是B，
+                //这里是因为要在套接字列表里面遍历，找到B的套接字，所以把这个任务交给了MyTcpServer
+                MyTcpServer::getInstance().resend(caPerName,respdu);
+
+
+            }
+            //用户不在线
+            else if( ret == 2 )
+            {
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_RESPOND;
+                strcpy(respdu->caData,ADD_FRIEND_OFFLINE);
+                write((char*)respdu,respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+            }
+            //用户不存在
+            else if( ret == 3 )
+            {
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_RESPOND;
+                strcpy(respdu->caData,ADD_FRIEND_NOTEXIST);
+                write((char*)respdu,respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+            }
+
+            break;
+        }
+        //客户端同意加好友
+        case ENUM_MSG_TYPE_ADD_FRIEND_AGREE:
+        {
+            char name[32] = {'\0'};
+            char pername[32] = {'\0'};
+            memcpy(name,pdu->caData,32);
+            memcpy(pername,pdu->caData+32,32);
+            bool ret = OpeDB::getInstance().handleAddFriendAgree(pername,name);
+            PDU* respdu = mkPDU(0);
+            if( ret )
+            {
+                //这里没写完
+            }
+            break;
+        }
+        //客户端拒绝加好友
+        case ENUM_MSG_TYPE_ADD_FRIEND_REFUSE:
+        {
+
+            break;
+        }
         default:
             break;
-    }
+    }//end of switch(pdu->uiMsgType)
     free(pdu);
     pdu = NULL;
 

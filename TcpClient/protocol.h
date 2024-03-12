@@ -10,23 +10,33 @@ typedef unsigned int uint;
 #define SEARCH_USR_NOT_EXIST "no such people"
 #define SEARCH_USR_ONLINE "online"
 #define SEARCH_USR_OFFLINE "offline"
+#define UNKNOW_ERROR "unknow error"
+#define FRIEND_EXISTED "friend existed"
+#define ADD_FRIEND_OFFLINE "usr offline"
+#define ADD_FRIEND_NOTEXIST "usr not exist"
 
 //消息类型的枚举
 enum ENUM_MSG_TYPE
 {
     ENUM_MSG_TYPE_MIN = 0,
 
-    ENUM_MSG_TYPE_REGIST_REQUEST = 1,       //注册请求
-    ENUM_MSG_TYPE_REGIST_RESPOND = 2,       //注册回复
+    ENUM_MSG_TYPE_REGIST_REQUEST,       //注册请求
+    ENUM_MSG_TYPE_REGIST_RESPOND,       //注册回复
 
-    ENUM_MSG_TYPE_LOGIN_REQUEST = 3,       //登录请求
-    ENUM_MSG_TYPE_LOGIN_RESPOND = 4,       //登录回复
+    ENUM_MSG_TYPE_LOGIN_REQUEST,       //登录请求
+    ENUM_MSG_TYPE_LOGIN_RESPOND,       //登录回复
 
-    ENUM_MSG_TYPE_ALL_ONLINE_REQUEST = 5,       //查看在线用户请求
-    ENUM_MSG_TYPE_ALL_ONLINE_RESPOND = 6,       //查看在线用户回复
+    ENUM_MSG_TYPE_ALL_ONLINE_REQUEST,       //查看在线用户请求
+    ENUM_MSG_TYPE_ALL_ONLINE_RESPOND,       //查看在线用户回复
 
-    ENUM_MSG_TYPE_SEARCH_USR_REQUEST = 7,       //搜索用户请求
-    ENUM_MSG_TYPE_SEARCH_USR_RESPOND = 8,       //搜索用户回复
+    ENUM_MSG_TYPE_SEARCH_USR_REQUEST,       //搜索用户请求
+    ENUM_MSG_TYPE_SEARCH_USR_RESPOND,       //搜索用户回复
+
+    ENUM_MSG_TYPE_ADD_FRIEND_REQUEST,       //加好友请求
+    ENUM_MSG_TYPE_ADD_FRIEND_RESPOND,       //加好友回复
+
+    ENUM_MSG_TYPE_ADD_FRIEND_AGREE,       //同意加好友
+    ENUM_MSG_TYPE_ADD_FRIEND_REFUSE,       //拒绝加好友
 
     ENUM_MSG_TYPE_MAX = 0x00ffffff,
 

@@ -66,6 +66,11 @@ QTcpSocket &TcpClient::getTcpSocket()
     return m_tcpSocket;
 }
 
+QString TcpClient::TcpClient::loginName()
+{
+    return m_strLoginName;
+}
+
 void TcpClient::showConnect()
 {
     QMessageBox::information(this,"连接服务器","连接服务器成功");
@@ -153,6 +158,38 @@ void TcpClient::recvMsg()
 
             break;
         }
+
+        //是REQUEST说明情况是客户端某一用户B收到了另外一个用户A的加好友请求
+        case ENUM_MSG_TYPE_ADD_FRIEND_REQUEST:
+        {
+            char caName[32] = {'\0'};
+            //A要加B，后32字节是A
+            strncpy(caName,pdu->caData+32,32);
+            int ret = QMessageBox::information(this,"添加好友",QString("%1 want to add you as friend").arg(caName)
+                                     ,QMessageBox::Yes,QMessageBox::No);
+            PDU* respdu = mkPDU(0);
+            memcpy(respdu->caData,pdu->caData,64);
+            if( ret == QMessageBox::Yes )
+            {
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_AGREE;
+            }
+            else
+            {
+                respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_REFUSE;
+            }
+            m_tcpSocket.write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+            break;
+        }
+
+        //是RESPOND说明情况是好友不存在、好友不在线等几种情况的一种
+        case ENUM_MSG_TYPE_ADD_FRIEND_RESPOND:
+        {
+            QMessageBox::information(this,"添加好友",pdu->caData);
+            break;
+        }
+
         default:
             break;
     }
@@ -195,6 +232,8 @@ void TcpClient::on_login_pb_clicked()
     QString strPwd = ui->pwd_le->text();
     if( !strName.isEmpty() && !strPwd.isEmpty() )
     {
+        //将用户登录使用的用户名保存在成员变量m_strLoginName中。
+        m_strLoginName = strName;
         //用户名和密码信息放在协议数据单元的caData里面就行了，不用放在caMsg里面，所以消息实体的长度是0.
         PDU *pdu = mkPDU(0);
         pdu->uiMsgType = ENUM_MSG_TYPE_LOGIN_REQUEST;

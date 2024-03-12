@@ -39,7 +39,7 @@ bool OpeDB::handleLogin(const char *name, const char *pwd)
         return false;
     }
     QString data = QString("select * from usrInfo where name=\'%1\' and pwd = \'%2\' and online = 0").arg(name).arg(pwd);
-    qDebug() << "handleLogin中，data为" << data;
+    //qDebug() << "handleLogin中，data为" << data;
     QSqlQuery query;
     query.exec(data);
     //next()获取查询结果中的下一条数据，将数据放到query对象中去。
@@ -69,7 +69,7 @@ void OpeDB::handleOffline(const char *name)
         return ;
     }
     QString data = QString("update usrInfo set online = 0 where name=\'%1\'").arg(name);
-    qDebug() << "handleOffline中，data为" << data;
+    //qDebug() << "handleOffline中，data为" << data;
     QSqlQuery query;
     query.exec(data);
 }
@@ -123,10 +123,69 @@ int OpeDB::handleSearchUsr(const char *name)
         }
     }
     //找的这个人不存在
-    else
+    return -1;
+}
+
+int OpeDB::handleAddFriend(const char *pername, const char *name)
+{
+    if( pername == NULL || name == NULL )
     {
         return -1;
     }
+    QString data = QString("select * from friend where (id=(select id from usrInfo where name = \'%1\') and friendId=(select id from usrInfo where name = \'%2\') ) "
+            "or ( friendId = (select id from usrInfo where name = \'%3\') and id = (select id from usrInfo where name = \'%4\' ) )").arg(pername).arg(name).arg(name).arg(pername) ;
+    //qDebug() << "在handleAddFriend中,data为：" << data;
+    QSqlQuery query;
+    query.exec(data);
+    //他俩已经是好友了
+    if(query.next())
+    {
+        //已经是好友了返回0
+        return 0;
+    }
+    else
+    {
+        //查询好友是否在线
+        QString data = QString("select online from usrInfo where name=\'%1\'").arg(pername);
+        QSqlQuery query;
+        query.exec(data);
+
+        if( query.next() )
+        {
+            int ret = query.value(0).toInt();
+            if( ret == 1 )
+            {
+                //在线返回1
+                return 1;
+            }
+            else if( ret == 0 )
+            {
+                //不在线返回2
+                return 0;
+            }
+        }
+    }
+    //查询的好友不存在
+    return 3;
+}
+
+bool OpeDB::handleAddFriendAgree(const char *pername, const char *name)
+{
+    QString data = QString("select id from usrInfo where name=\'%1\' or name=\'%2\'").arg(pername).arg(name);
+    QSqlQuery query;
+    qDebug() << "data = " << data;
+    query.exec(data);
+    int id1 = 0,id2 = 0;
+    if( query.next() )
+        id1 = query.value(0).toInt();
+    if( query.next() )
+        id2 = query.value(0).toInt();
+    qDebug() << "id1 = " << id1;
+    qDebug() << "id2 = " << id2;
+    data = QString("insert into friend (id,friendId) values(%1,%2)").arg(id1).arg(id2);
+    qDebug() << "data = " << data;
+    query.exec(data);
+    return true;
 }
 
 OpeDB &OpeDB::getInstance()
