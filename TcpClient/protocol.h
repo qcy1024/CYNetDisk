@@ -38,6 +38,9 @@ enum ENUM_MSG_TYPE
     ENUM_MSG_TYPE_ADD_FRIEND_AGREE,       //同意加好友
     ENUM_MSG_TYPE_ADD_FRIEND_REFUSE,       //拒绝加好友
 
+    ENUM_MSG_TYPE_FLUSH_FRIEND_REQUEST,       //刷新好友请求
+    ENUM_MSG_TYPE_FLUSH_FRIEND_RESPOND,       //刷新好友回复
+
     ENUM_MSG_TYPE_MAX = 0x00ffffff,
 
 

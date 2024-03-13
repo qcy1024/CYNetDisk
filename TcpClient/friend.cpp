@@ -53,6 +53,9 @@ Friend::Friend(QWidget *parent)
 
     connect(m_pSearchUsrPB,SIGNAL(clicked(bool))
             ,this,SLOT(searchUsr()));
+
+    connect(m_pFlushFriendPB,SIGNAL(clicked(bool))
+            ,this,SLOT(flushFriend()));
 }
 
 void Friend::showAllOnlineUsr(PDU *pdu)
@@ -64,6 +67,21 @@ void Friend::showAllOnlineUsr(PDU *pdu)
     m_pOnline->showUsr(pdu);
 
     return;
+}
+
+void Friend::updateFriendList(PDU *pdu)
+{
+    if( pdu == NULL )
+    {
+        return ;
+    }
+    uint uiSize = pdu->uiMsgLen / 32;
+    char caName[32] = {'\0'};
+    for( uint i=0; i<uiSize; i++ )
+    {
+        memcpy(caName,(char*)(pdu->caMsg)+i*32,32);;
+        m_pFriendListWidget->addItem(caName);
+    }
 }
 
 //点击"查看在线用户"的触发函数
@@ -100,4 +118,17 @@ void Friend::searchUsr()
         free(pdu);
         pdu = NULL;
     }
+}
+
+//"刷新好友"按钮的触发函数
+void Friend::flushFriend()
+{
+    //点击“刷新好友”时，要把自己的用户名发给服务器，这样服务器才能知道你有哪些好友
+    QString strName = TcpClient::getInstance().loginName();
+    PDU* pdu = mkPDU(0);
+    pdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FRIEND_REQUEST;
+    memcpy(pdu->caData,strName.toStdString().c_str(),strName.size());
+    TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+    free(pdu);
+    pdu = NULL;
 }

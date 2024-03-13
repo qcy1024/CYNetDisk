@@ -18,6 +18,7 @@ class Friend : public QWidget
 public:
     explicit Friend(QWidget *parent = nullptr);
     void showAllOnlineUsr(PDU* pdu);
+    void updateFriendList(PDU* pdu);
 
     QString m_strSearchName;    //临时的名字，用于查找时的客户端提示
 
@@ -26,6 +27,7 @@ signals:
 public slots:
     void showOnline();
     void searchUsr();
+    void flushFriend();     //点击"刷新好友"按钮的触发函数
 
 
 private:

@@ -214,7 +214,8 @@ void MyTcpSocket::recvMsg()
             PDU* respdu = mkPDU(0);
             if( ret )
             {
-                //这里没写完
+                //这里没写完:客户端同意加好友了之后，把好友信息已经写入了数据库，返回值ret为
+                //true说明操作成功，此时需要把加好友成功的信息返回给客户端，这里就没写。
             }
             break;
         }
@@ -222,6 +223,26 @@ void MyTcpSocket::recvMsg()
         case ENUM_MSG_TYPE_ADD_FRIEND_REFUSE:
         {
 
+            break;
+        }
+        //刷新好友请求
+        case ENUM_MSG_TYPE_FLUSH_FRIEND_REQUEST:
+        {
+            char caName[32] = {'\0'};
+            strncpy(caName,pdu->caData,32);
+            QStringList ret = OpeDB::getInstance().handleFlushFriend(caName);
+            //有ret.size()个人，一个人占32个字节
+            uint uiMsgLen = ret.size() * 32;
+            PDU* respdu = mkPDU(uiMsgLen);
+            respdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FRIEND_RESPOND;
+            for( int i=0; i<ret.size(); ++i )
+            {
+                memcpy((char*)(respdu->caMsg)+i*32,ret.at(i).toStdString().c_str()
+                       ,ret.at(i).size());
+            }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
             break;
         }
         default:

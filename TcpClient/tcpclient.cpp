@@ -189,13 +189,19 @@ void TcpClient::recvMsg()
             QMessageBox::information(this,"添加好友",pdu->caData);
             break;
         }
+        //刷新好友回复
+        case ENUM_MSG_TYPE_FLUSH_FRIEND_RESPOND:
+        {
+            OpeWidget::getInstance().getFriend()->updateFriendList(pdu);
+            break;
+        }
 
         default:
             break;
-    }
+    }//end of switch(pdu->uiMsgType)
     free(pdu);
     pdu = NULL;
-}
+}//end of void TcpClient::recvMsg()
 
 #if 0
 //ui界面上的“发送”按钮的触发函数

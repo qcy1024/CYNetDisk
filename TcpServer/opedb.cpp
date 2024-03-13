@@ -188,6 +188,41 @@ bool OpeDB::handleAddFriendAgree(const char *pername, const char *name)
     return true;
 }
 
+//这里有bug，较大怀疑是数据库查询语句有问题
+//就是数据库的问题。查询语句没问题，是数据库本身的问题。
+QStringList OpeDB::handleFlushFriend(const char *name)
+{
+    QStringList strFriendList;
+    strFriendList.clear();
+    if( name == NULL )
+    {
+        return strFriendList;
+    }
+    //要两次查询，分别是friend表中name的那个人作为id以及friendId。
+    QString data = QString("select name from usrInfo where online = 1 and id = ("
+                           "select id from friend where friendId=("
+                           "select id from usrInfo where name=\'%1\'))").arg(name);
+    QSqlQuery query;
+    query.exec(data);
+    while( query.next() )
+    {
+        strFriendList.append(query.value(0).toString());
+        qDebug() << "handleFlushFriend中，一个好友是：" << query.value(0).toString();
+    }
+
+    data = QString("select name from usrInfo where online = 1 and id = ("
+                           "select friendId from friend where id=("
+                           "select id from usrInfo where name=\'%1\'))").arg(name);
+    query.exec(data);
+    while( query.next() )
+    {
+        strFriendList.append(query.value(0).toString());
+        qDebug() << "handleFlushFriend中，一个好友是：" << query.value(0).toString();
+    }
+
+    return strFriendList;
+}
+
 OpeDB &OpeDB::getInstance()
 {
     static OpeDB instance;

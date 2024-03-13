@@ -31,6 +31,8 @@ public:
     int handleAddFriend(const char* pername,const char* name);
     //客户端同意添加好友后服务器的处理
     bool handleAddFriendAgree(const char* pername,const char* name);
+    //将在线好友用一个QStringList返回
+    QStringList handleFlushFriend(const char* name);
 signals:
 
 public slots:
