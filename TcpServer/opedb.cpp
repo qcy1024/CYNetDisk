@@ -207,7 +207,7 @@ QStringList OpeDB::handleFlushFriend(const char *name)
     while( query.next() )
     {
         strFriendList.append(query.value(0).toString());
-        qDebug() << "handleFlushFriend中，一个好友是：" << query.value(0).toString();
+        //qDebug() << "handleFlushFriend中，一个好友是：" << query.value(0).toString();
     }
 
     data = QString("select name from usrInfo where online = 1 and id = ("
@@ -217,10 +217,32 @@ QStringList OpeDB::handleFlushFriend(const char *name)
     while( query.next() )
     {
         strFriendList.append(query.value(0).toString());
-        qDebug() << "handleFlushFriend中，一个好友是：" << query.value(0).toString();
+        //qDebug() << "handleFlushFriend中，一个好友是：" << query.value(0).toString();
     }
 
     return strFriendList;
+}
+
+bool OpeDB::handleDelFriend(const char *name, const char *friendName)
+{
+    if( name == NULL || friendName == NULL )
+    {
+        return false;
+    }
+    QString data = QString("delete from friend where "
+                           "id=( select id from usrInfo where name=\'%1\' )"
+                           " and friendId=( select id from usrInfo where name=\'%2\' )")
+                       .arg(name).arg(friendName);
+    QSqlQuery query;
+    query.exec(data);
+
+    data = QString("delete from friend where "
+                           "id=( select id from usrInfo where name=\'%1\' )"
+                           " and friendId=( select id from usrInfo where name=\'%2\' )")
+                       .arg(friendName).arg(name);
+    query.exec(data);
+
+    return true;
 }
 
 OpeDB &OpeDB::getInstance()

@@ -28,7 +28,8 @@ public:
 
     static TcpClient& getInstance();
     QTcpSocket& getTcpSocket();
-    QString loginName();
+
+    QString loginName();    //返回m_strLoginName，即用户的登录名字
 
 public slots:
     void showConnect();

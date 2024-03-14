@@ -28,7 +28,7 @@ public slots:
     void showOnline();
     void searchUsr();
     void flushFriend();     //点击"刷新好友"按钮的触发函数
-
+    void delFriend();       //点击"删除好友"按钮的触发函数
 
 private:
     QTextEdit* m_pShowMsgTE;  //显示信息

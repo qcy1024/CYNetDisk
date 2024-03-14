@@ -13,6 +13,7 @@ MyTcpSocket::MyTcpSocket(QObject *parent)
     connect(this,SIGNAL(disconnected()),this,SLOT(clientOffline()));
 }
 
+//返回这个登录用户的name(每一个用户在登录时都会创建一个不同的MyTcpSocket对象)
 QString MyTcpSocket::getName()
 {
     return m_strName;
@@ -245,6 +246,24 @@ void MyTcpSocket::recvMsg()
             respdu = NULL;
             break;
         }
+        //删除好友请求
+        case ENUM_MSG_TYPE_DELETE_FRIEND_REQUEST:
+        {
+            char caSelfName[32] = {'\0'};
+            char caFriendName[32] = {'\0'};
+            strncpy(caSelfName,pdu->caData,32);
+            strncpy(caFriendName,pdu->caData+32,32);
+            OpeDB::getInstance().handleDelFriend(caSelfName,caFriendName);
+            PDU* respdu = mkPDU(0);
+            respdu->uiMsgType = ENUM_MSG_TYPE_DELETE_FRIEND_RESPOND;
+            strcpy(respdu->caData,DEL_FRIEND_OK);
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+
+
+            break;
+        }
         default:
             break;
     }//end of switch(pdu->uiMsgType)
@@ -259,3 +278,19 @@ void MyTcpSocket::clientOffline()
     //发出信号offline
     emit offline(this);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

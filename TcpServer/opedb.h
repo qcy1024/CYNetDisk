@@ -33,6 +33,7 @@ public:
     bool handleAddFriendAgree(const char* pername,const char* name);
     //将在线好友用一个QStringList返回
     QStringList handleFlushFriend(const char* name);
+    bool handleDelFriend(const char* name,const char* friendName);
 signals:
 
 public slots:

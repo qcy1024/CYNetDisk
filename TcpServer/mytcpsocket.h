@@ -12,7 +12,7 @@ class MyTcpSocket : public QTcpSocket
 public:
     explicit MyTcpSocket(QObject *parent = nullptr);
 
-    QString getName();
+    QString getName();  //返回这个登录用户的name
 
 //信号
 signals:
