@@ -260,9 +260,20 @@ void MyTcpSocket::recvMsg()
             write((char*)respdu,respdu->uiPDULen);
             free(respdu);
             respdu = NULL;
-
-
             break;
+        }
+        //私聊请求
+        case ENUM_MSG_TYPE_PRIVATE_CHAT_REQUEST:
+        {
+            //注意私聊请求需要找到对方的socket，来转发信息，socket都保存在TcpServer里面。
+            //我们可以给出要发送的pdu,以及要发给哪个人，根据函数
+            //resend(const char* pername,PDU* pdu)来实现转发。
+            char caPerName[32] = {'\0'};
+            memcpy(caPerName,pdu->caData+32,32);
+            //qDebug() << caPerName;
+            //注意将这个pdu转发给客户端时，并没有对pdu做出任何改变，
+            //因此，客户端收到的pdu->uiMsgType依然是REQUEST.
+            MyTcpServer::getInstance().resend(caPerName,pdu);
         }
         default:
             break;
