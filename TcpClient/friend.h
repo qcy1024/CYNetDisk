@@ -19,7 +19,7 @@ public:
     explicit Friend(QWidget *parent = nullptr);
     void showAllOnlineUsr(PDU* pdu);
     void updateFriendList(PDU* pdu);    //更新好友列表
-    void updateGrouopMsg(PDU* pdu);             //更新群聊信息
+    void updateGrouopMsg(PDU* pdu);     //更新群聊信息
 
 
     QString m_strSearchName;    //临时的名字，用于查找时的客户端提示

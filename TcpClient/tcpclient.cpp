@@ -72,6 +72,11 @@ QString TcpClient::TcpClient::loginName()
     return m_strLoginName;
 }
 
+QString TcpClient::curPath()
+{
+    return m_strCurPath;
+}
+
 void TcpClient::showConnect()
 {
     QMessageBox::information(this,"连接服务器","连接服务器成功");
@@ -117,6 +122,7 @@ void TcpClient::recvMsg()
         {
             if( strcmp(pdu->caData,LOGIN_OK) == 0 )
             {
+                m_strCurPath = QString("./%1").arg(m_strLoginName);
                 QMessageBox::information(this,"登录",LOGIN_OK);
                 //操作界面show之后，会新弹出一个操作界面，原来的登录界面不会关闭
                 OpeWidget::getInstance().show();
@@ -223,6 +229,13 @@ void TcpClient::recvMsg()
         case ENUM_MSG_TYPE_GROUP_CHAT_REQUEST:
         {
             OpeWidget::getInstance().getFriend()->updateGrouopMsg(pdu);
+            break;
+        }
+
+        //创建文件夹回复
+        case ENUM_MSG_TYPE_CREATE_DIR_RESPOND:
+        {
+            QMessageBox::information(this,"创建文件",pdu->caData);
             break;
         }
 

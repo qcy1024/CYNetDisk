@@ -2,6 +2,7 @@
 #define MYTCPSOCKET_H
 
 #include <QTcpSocket>
+#include <QDir>
 #include "protocol.h"
 #include "opedb.h"
 

@@ -1,6 +1,8 @@
 #include "mytcpsocket.h"
 #include <QDebug>
 #include "mytcpserver.h"
+//QDir是QT里面封装的一个类，专门用于操作目录
+#include <QDir>
 
 MyTcpSocket::MyTcpSocket(QObject *parent)
     : QTcpSocket{parent}
@@ -49,7 +51,7 @@ void MyTcpSocket::recvMsg()
             char caPwd[32] = {'\0'};
             strncpy(caName,pdu->caData,32);
             strncpy(caPwd,pdu->caData+32,32);
-            qDebug() << "服务端处理出的用户名字为:" << caName << "密码为:" << caPwd << pdu->uiMsgType;
+            //qDebug() << "服务端处理出的用户名字为:" << caName << "密码为:" << caPwd << pdu->uiMsgType;
             bool ret = OpeDB::getInstance().handleRegist(caName,caPwd);
             //对注册请求的回复无非就是注册成功或注册失败，用caData的64字节足够了。
             PDU* respdu = mkPDU(0);
@@ -57,6 +59,12 @@ void MyTcpSocket::recvMsg()
             if( ret )
             {
                 strcpy(respdu->caData,REGIST_OK);
+
+                QDir dir;
+                //这里的./是服务器的运行目录，在本机上是build-TcpServer-Desktop_Qt_6_5_3_MinGW_64_bit-Debug这个目录
+                qDebug() << "Create dir: " << dir.mkdir(QString("./%1").arg(caName));
+
+
             }
             else
             {
@@ -275,6 +283,7 @@ void MyTcpSocket::recvMsg()
             //因此，客户端收到的pdu->uiMsgType依然是REQUEST.
             MyTcpServer::getInstance().resend(caPerName,pdu);
         }
+        //群聊请求
         case ENUM_MSG_TYPE_GROUP_CHAT_REQUEST:
         {
             char caName[32] = {'\0'};
@@ -287,6 +296,51 @@ void MyTcpSocket::recvMsg()
                 //注意这里的转发消息类型同样是没变，客户端收到的pdu类型依然是REQUEST
                 MyTcpServer::getInstance().resend(tmp.toStdString().c_str(),pdu);
             }
+            break;
+        }
+        //创建文件夹请求
+        case ENUM_MSG_TYPE_CREATE_DIR_REQUEST:
+        {
+            QDir dir;
+            QString strCurPath = QString("%1").arg((char*)(pdu->caMsg));
+            //qDebug() << "strCurPath = " << strCurPath;
+            bool ret = dir.exists(strCurPath);
+            PDU* respdu = NULL;
+            //当前目录存在
+            if( ret )
+            {
+                char caNewDir[32] = {'\0'};
+                memcpy(caNewDir,pdu->caData+32,32);
+                QString strNewPath = strCurPath + "/" + caNewDir;
+                //qDebug() << strNewPath;
+                ret = dir.exists(strNewPath);
+                //qDebug() << "-->" << ret;
+                //用户的当前目录下要创建的文件夹名字已存在
+                if( ret )
+                {
+                    respdu = mkPDU(0);
+                    strcpy(respdu->caData,DIR_NAME_EXIST);
+                    respdu->uiMsgType = ENUM_MSG_TYPE_CREATE_DIR_RESPOND;
+                }
+                //用户的当前目录下要创建的文件夹名字已存在
+                else
+                {
+                    dir.mkdir(strNewPath);
+                    respdu = mkPDU(0);
+                    strcpy(respdu->caData,CREATE_DIR_OK);
+                    respdu->uiMsgType = ENUM_MSG_TYPE_CREATE_DIR_RESPOND;
+                }
+            }
+            //当前目录不存在
+            else
+            {
+                respdu = mkPDU(0);
+                strcpy(respdu->caData,DIR_NO_EXIST);
+                respdu->uiMsgType = ENUM_MSG_TYPE_CREATE_DIR_RESPOND;
+            }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
             break;
         }
         default:

@@ -30,6 +30,7 @@ public:
     QTcpSocket& getTcpSocket();
 
     QString loginName();    //返回m_strLoginName，即用户的登录名字
+    QString curPath();      //返回用户当前所在的路径
 
 public slots:
     void showConnect();
@@ -57,5 +58,8 @@ private:
 
     //用户登录时输入的用户名
     QString m_strLoginName;
+
+    //用户当前的路径
+    QString m_strCurPath;
 };
 #endif // TCPCLIENT_H
