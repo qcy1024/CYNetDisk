@@ -275,6 +275,20 @@ void MyTcpSocket::recvMsg()
             //因此，客户端收到的pdu->uiMsgType依然是REQUEST.
             MyTcpServer::getInstance().resend(caPerName,pdu);
         }
+        case ENUM_MSG_TYPE_GROUP_CHAT_REQUEST:
+        {
+            char caName[32] = {'\0'};
+            strncpy(caName,pdu->caData,32);
+            //handleFlushFriend()的返回值是caName的所有在线好友的一个QStringList
+            QStringList onlineFriend = OpeDB::getInstance().handleFlushFriend(caName);
+            for( int i=0; i<onlineFriend.size(); ++i )
+            {
+                QString tmp = onlineFriend.at(i);
+                //注意这里的转发消息类型同样是没变，客户端收到的pdu类型依然是REQUEST
+                MyTcpServer::getInstance().resend(tmp.toStdString().c_str(),pdu);
+            }
+            break;
+        }
         default:
             break;
     }//end of switch(pdu->uiMsgType)

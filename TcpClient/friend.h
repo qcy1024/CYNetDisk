@@ -18,7 +18,9 @@ class Friend : public QWidget
 public:
     explicit Friend(QWidget *parent = nullptr);
     void showAllOnlineUsr(PDU* pdu);
-    void updateFriendList(PDU* pdu);
+    void updateFriendList(PDU* pdu);    //更新好友列表
+    void updateGrouopMsg(PDU* pdu);             //更新群聊信息
+
 
     QString m_strSearchName;    //临时的名字，用于查找时的客户端提示
 
@@ -30,6 +32,7 @@ public slots:
     void flushFriend();     //点击"刷新好友"按钮的触发函数
     void delFriend();       //点击"删除好友"按钮的触发函数
     void privateChat();     //点击"私聊"的触发函数
+    void groupChat();       //点击"发送信息"的触发函数
 
 private:
     QTextEdit* m_pShowMsgTE;  //显示信息

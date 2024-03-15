@@ -17,7 +17,7 @@ Friend::Friend(QWidget *parent)
     m_pFlushFriendPB = new QPushButton("刷新好友");  //刷新在线好友按钮
     m_pShowOnlineUsrPB = new QPushButton("显示在线用户");    //查看在线的用户
     m_pSearchUsrPB = new QPushButton("查找用户");    //查找用户按钮
-    m_pMsgSendPB = new QPushButton("信息发送");      //发送消息按钮
+    m_pMsgSendPB = new QPushButton("信息发送");      //发送消息按钮（群聊）
     m_pPrivateChatPB = new QPushButton("私聊");  //私聊按钮
 
     //以下几项放在一个垂直布局
@@ -63,6 +63,9 @@ Friend::Friend(QWidget *parent)
 
     connect(m_pPrivateChatPB,SIGNAL(clicked(bool))
             ,this,SLOT(privateChat()));
+    connect(m_pMsgSendPB,SIGNAL(clicked(bool))
+            ,this,SLOT(groupChat()));
+
 }
 
 void Friend::showAllOnlineUsr(PDU *pdu)
@@ -89,6 +92,12 @@ void Friend::updateFriendList(PDU *pdu)
         memcpy(caName,(char*)(pdu->caMsg)+i*32,32);;
         m_pFriendListWidget->addItem(caName);
     }
+}
+
+void Friend::updateGrouopMsg(PDU *pdu)
+{
+    QString strMsg = QString("%1 says: %2").arg(pdu->caData).arg((char*)(pdu->caMsg));
+    m_pShowMsgTE->append(strMsg);
 }
 
 //点击"查看在线用户"的触发函数
@@ -170,6 +179,27 @@ void Friend::privateChat()
     else
     {
         QMessageBox::warning(this,"私聊","请选择私聊的对象");
+    }
+}
+
+//"发送信息"按钮的触发函数
+void Friend::groupChat()
+{
+    QString strMsg = m_pInputMsgLE->text();
+    if( !strMsg.isEmpty() )
+    {
+        PDU* pdu = mkPDU(strMsg.size()+1);
+        pdu->uiMsgType = ENUM_MSG_TYPE_GROUP_CHAT_REQUEST;
+        QString strName = TcpClient::getInstance().loginName();
+        strncpy(pdu->caData,strName.toStdString().c_str(),strName.size());
+        strncpy((char*)(pdu->caMsg),strMsg.toStdString().c_str(),strMsg.size());
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+        free(pdu);
+        pdu = NULL;
+    }
+    else
+    {
+        QMessageBox::information(this,"群聊","消息不能为空");
     }
 }
 

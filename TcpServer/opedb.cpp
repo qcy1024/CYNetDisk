@@ -189,7 +189,8 @@ bool OpeDB::handleAddFriendAgree(const char *pername, const char *name)
 }
 
 //这里有bug，较大怀疑是数据库查询语句有问题
-//就是数据库的问题。查询语句没问题，是数据库本身的问题。
+//就是数据库的问题。查询语句没问题，是数据库本身的问题，数据库在嵌套查询时，多条记录只查第一条
+//又推翻了，用in代替等于号"="就可以多条记录嵌套查询。
 QStringList OpeDB::handleFlushFriend(const char *name)
 {
     QStringList strFriendList;
@@ -199,7 +200,7 @@ QStringList OpeDB::handleFlushFriend(const char *name)
         return strFriendList;
     }
     //要两次查询，分别是friend表中name的那个人作为id以及friendId。
-    QString data = QString("select name from usrInfo where online = 1 and id = ("
+    QString data = QString("select name from usrInfo where online = 1 and id in ("
                            "select id from friend where friendId=("
                            "select id from usrInfo where name=\'%1\'))").arg(name);
     QSqlQuery query;
@@ -210,7 +211,7 @@ QStringList OpeDB::handleFlushFriend(const char *name)
         //qDebug() << "handleFlushFriend中，一个好友是：" << query.value(0).toString();
     }
 
-    data = QString("select name from usrInfo where online = 1 and id = ("
+    data = QString("select name from usrInfo where online = 1 and id in ("
                            "select friendId from friend where id=("
                            "select id from usrInfo where name=\'%1\'))").arg(name);
     query.exec(data);

@@ -202,6 +202,7 @@ void TcpClient::recvMsg()
             QMessageBox::information(this,"删除好友","删除好友成功");
             break;
         }
+        //私聊请求(他人发给此处的私聊消息经服务器转发到此，此处接收)
         case ENUM_MSG_TYPE_PRIVATE_CHAT_REQUEST:
         {
             //收到消息后，将收到的消息展示在聊天窗口中
@@ -216,6 +217,12 @@ void TcpClient::recvMsg()
 
             PrivateChat::getInstance().updateMsg((pdu));
 
+            break;
+        }
+        //群聊请求(他人发出的群聊消息经服务器转发，此处接收到了)
+        case ENUM_MSG_TYPE_GROUP_CHAT_REQUEST:
+        {
+            OpeWidget::getInstance().getFriend()->updateGrouopMsg(pdu);
             break;
         }
 

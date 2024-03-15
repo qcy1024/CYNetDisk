@@ -52,6 +52,7 @@ void PrivateChat::on_sendMsg_pb_clicked()
         //
         PDU* pdu = mkPDU(strMsg.size()+1);
         pdu->uiMsgType = ENUM_MSG_TYPE_PRIVATE_CHAT_REQUEST;
+        //前32字节是自己的名字，后32字节是对方的名字。
         memcpy(pdu->caData,m_strLoginName.toStdString().c_str(),m_strLoginName.size());
         memcpy(pdu->caData+32,m_strChatName.toStdString().c_str(),m_strChatName.size());
         strcpy((char*)pdu->caMsg,strMsg.toStdString().c_str());
