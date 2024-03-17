@@ -14,11 +14,12 @@ class Book : public QWidget
     Q_OBJECT
 public:
     explicit Book(QWidget *parent = nullptr);
-
+    void updateFileList(const PDU* pdu);
 signals:
 
 public slots:
     void createDir();
+    void flushFile();
 
 private:
     QListWidget* m_pBookListW;  //显示文件名字的列表
@@ -27,7 +28,7 @@ private:
     QPushButton* m_pCreateDirPB;    //创建目录按钮
     QPushButton* m_pDelDirPB;
     QPushButton* m_pRenamePB;
-    QPushButton* m_pFlushPB;
+    QPushButton* m_pFlushPB;        //刷新(查看)文件按钮
     QPushButton* m_pUploadPB;
     QPushButton* m_pDownloadPB;
     QPushButton* m_pDelFilePB;

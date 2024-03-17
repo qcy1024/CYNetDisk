@@ -3,6 +3,7 @@
 #include "mytcpserver.h"
 //QDir是QT里面封装的一个类，专门用于操作目录
 #include <QDir>
+#include <QFileInfoList>
 
 MyTcpSocket::MyTcpSocket(QObject *parent)
     : QTcpSocket{parent}
@@ -338,6 +339,48 @@ void MyTcpSocket::recvMsg()
                 strcpy(respdu->caData,DIR_NO_EXIST);
                 respdu->uiMsgType = ENUM_MSG_TYPE_CREATE_DIR_RESPOND;
             }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+            break;
+        }//end of case ENUM_MSG_TYPE_CREATE_DIR_REQUEST
+        //刷新文件请求
+        case ENUM_MSG_TYPE_FLUSH_FILE_REQUEST:
+        {
+            //用pCurPath保存客户端传过来的那个目录
+            char* pCurPath = new char[pdu->uiMsgLen];
+            memcpy(pCurPath,pdu->caMsg,pdu->uiMsgLen);
+            QDir dir(pCurPath);
+            QFileInfoList fileInfoList = dir.entryInfoList();
+            //fileInfoList.size()即得到了该目录下有几个文件
+            int iFileCount = fileInfoList.size();
+            //文件数乘以一个文件的大小，即是整个pdu消息部分的大小。
+            PDU* respdu = mkPDU(sizeof(FileInfo)*iFileCount);
+            respdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FILE_RESPOND;
+            FileInfo* pFileInfo = NULL;
+            QString strFileName;
+
+            for( int i=0; i<iFileCount; ++i )
+            {
+                pFileInfo = (FileInfo*)(respdu->caMsg) + i;
+                strFileName = fileInfoList[i].fileName();
+                memcpy(pFileInfo->caFileName,strFileName.toStdString().c_str(),strFileName.size());
+                if( fileInfoList[i].isDir() )
+                {
+                    //0表示是一个目录
+                    pFileInfo->iFileType = 0;
+                }
+                else if( fileInfoList[i].isFile() )
+                {
+                    //1表示是一个常规文件
+                    pFileInfo->iFileType = 1;
+                }
+                // qDebug() << fileInfoList[i].fileName()
+                //          << fileInfoList[i].size()
+                //          << "文件夹:" << fileInfoList[i].isDir()
+                //          << "常规文件:" << fileInfoList[i].isFile();
+            }
+
             write((char*)respdu,respdu->uiPDULen);
             free(respdu);
             respdu = NULL;

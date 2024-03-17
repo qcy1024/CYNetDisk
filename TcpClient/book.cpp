@@ -43,6 +43,50 @@ Book::Book(QWidget *parent)
     connect(m_pCreateDirPB,SIGNAL(clicked(bool))
             ,this,SLOT(createDir()));
 
+    connect(m_pFlushPB,SIGNAL(clicked(bool))
+            ,this,SLOT(flushFile()));
+
+}
+
+void Book::updateFileList(const PDU *pdu)
+{
+    if( pdu == NULL )
+    {
+        return ;
+    }
+    QListWidgetItem* pItemTmp = NULL;
+    int row = m_pBookListW->count();
+    while( m_pBookListW->count() > 0 )
+    {
+        pItemTmp = m_pBookListW->item(row-1);
+        m_pBookListW->removeItemWidget(pItemTmp);
+        delete pItemTmp;
+        row = row - 1;
+    }
+    FileInfo* pFileInfo = NULL;
+    //iCount是文件数量
+    int iCount = pdu->uiMsgLen / sizeof(FileInfo);
+    for( int i=0; i<iCount; ++i )
+    {
+        pFileInfo = (FileInfo*)(pdu->caMsg) + i;
+        //qDebug() << pFileInfo->caFileName << pFileInfo->iFileType;
+        //循环中每一个文件或文件夹都有一个QListWidgetItem来代表
+        QListWidgetItem* pItem = new QListWidgetItem;
+        if( pFileInfo->iFileType == 0 )
+        {
+            //设置图标为文件夹图标
+            pItem->setIcon(QIcon(QPixmap(":/map/DirIcon.png")));
+        }
+        else if( pFileInfo->iFileType == 1 )
+        {
+            //设置图标为文件图标
+            pItem->setIcon(QIcon(QPixmap(":/map/FileIcon.jpg")));
+        }
+        //设置文本为caFileName
+        pItem->setText(pFileInfo->caFileName);
+        m_pBookListW->addItem(pItem);
+    }
+
 }
 
 //点击"新建文件夹"按钮的槽函数
@@ -79,6 +123,33 @@ void Book::createDir()
     }
 
 }
+
+//"刷新文件"按钮的触发函数
+void Book::flushFile()
+{
+    QString strCurPath = TcpClient::getInstance().curPath();
+    //将路径放在caMsg里面
+    PDU* pdu = mkPDU(strCurPath.size()+1);
+    pdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FILE_REQUEST;
+    strncpy((char*)(pdu->caMsg),strCurPath.toStdString().c_str(),strCurPath.size());
+    TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+    free(pdu);
+    pdu = NULL;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
