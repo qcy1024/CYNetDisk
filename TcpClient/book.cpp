@@ -46,6 +46,9 @@ Book::Book(QWidget *parent)
     connect(m_pFlushPB,SIGNAL(clicked(bool))
             ,this,SLOT(flushFile()));
 
+    connect(m_pDelDirPB,SIGNAL(clicked(bool))
+            ,this,SLOT(delDir()));
+
 }
 
 void Book::updateFileList(const PDU *pdu)
@@ -136,6 +139,35 @@ void Book::flushFile()
     free(pdu);
     pdu = NULL;
 
+}
+
+//按钮"删除文件夹"的触发函数
+void Book::delDir()
+{
+    //获得当前所在目录
+    QString strCurPath = TcpClient::getInstance().curPath();
+    //获得界面上当前选中的内容
+    QListWidgetItem* pItem = m_pBookListW->currentItem();
+    //当前没有选中内容
+    if( pItem == NULL )
+    {
+        QMessageBox::warning(this,"删除文件","请选择要删除的文件");
+    }
+    //当前选中了内容
+    else
+    {
+        //获得所选中的内容的名字的字符串
+        QString strDelName = pItem->text();
+        PDU* pdu = mkPDU(strCurPath.size()+1);
+        pdu->uiMsgType = ENUM_MSG_TYPE_DEL_DIR_REQUEST;
+        //要删除的名字放在caData里面
+        strncpy(pdu->caData,strDelName.toStdString().c_str(),strDelName.size());
+        //要删除的路径放在caMsg里面
+        memcpy(pdu->caMsg,strCurPath.toStdString().c_str(),strCurPath.size());
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+        free(pdu);
+        pdu = NULL;
+    }
 }
 
 

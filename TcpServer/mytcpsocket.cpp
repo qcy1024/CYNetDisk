@@ -386,6 +386,53 @@ void MyTcpSocket::recvMsg()
             respdu = NULL;
             break;
         }
+        case ENUM_MSG_TYPE_DEL_DIR_REQUEST:
+        {
+            //客户端发过来的是要删除的路径和文件名，我们首先将路径和文件名拼成一个完整的路径。
+            char caName[64] = {'\0'};
+            strcpy(caName,pdu->caData);
+            //pdu->uiMsgLen是客户端传来的路径的长度
+            char* pPath = new char[pdu->uiMsgLen];
+            memcpy(pPath,pdu->caMsg,pdu->uiMsgLen);
+            QString strPath = QString("%1/%2").arg(pPath).arg(caName);
+            //qDebug() << strPath;
+            //产生一个QFileInfo对象，用该对象来判断该路径是不是一个目录
+            QFileInfo fileInfo(strPath);
+            bool ret = false;
+            //strPath是一个目录
+            if( fileInfo.isDir() )
+            {
+                QDir dir;
+                dir.setPath(strPath);
+                //removeRecursively()是删除递归删除该目录
+                ret = dir.removeRecursively();
+            }
+            //strPath是一个常规文件
+            else if( fileInfo.isFile() )
+            {
+                //不删除
+                ret = false;
+            }
+            PDU* respdu = NULL;
+            //删除成功
+            if( ret )
+            {
+                respdu = mkPDU(strlen(DEL_DIR_OK+1));
+                respdu->uiMsgType = ENUM_MSG_TYPE_DEL_DIR_RESPOND;
+                memcpy(respdu->caData,DEL_DIR_OK,strlen(DEL_DIR_OK));
+            }
+            //删除失败
+            else
+            {
+                respdu = mkPDU(strlen(DEL_DIR_OK+1));
+                respdu->uiMsgType = ENUM_MSG_TYPE_DEL_DIR_RESPOND;
+                memcpy(respdu->caData,DEL_DIR_FAILED,strlen(DEL_DIR_FAILED));
+            }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+            break;
+        }
         default:
             break;
     }//end of switch(pdu->uiMsgType)

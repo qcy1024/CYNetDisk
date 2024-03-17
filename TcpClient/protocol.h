@@ -17,6 +17,8 @@ typedef unsigned int uint;
 #define DEL_FRIEND_OK "delete friend ok"
 #define DIR_NO_EXIST "cur dir not exist"
 #define DIR_NAME_EXIST "file name exist"
+#define DEL_DIR_OK "delete dir ok"
+#define DEL_DIR_FAILED "delete dir failed"
 
 //消息类型的枚举
 enum ENUM_MSG_TYPE
@@ -58,6 +60,9 @@ enum ENUM_MSG_TYPE
 
     ENUM_MSG_TYPE_FLUSH_FILE_REQUEST,       //查看(刷新)文件请求
     ENUM_MSG_TYPE_FLUSH_FILE_RESPOND,       //查看(刷新)文件回复
+
+    ENUM_MSG_TYPE_DEL_DIR_REQUEST,       //删除目录请求
+    ENUM_MSG_TYPE_DEL_DIR_RESPOND,       //删除目录回复
 
     ENUM_MSG_TYPE_MAX = 0x00ffffff,
 

@@ -10,8 +10,7 @@ typedef unsigned int uint;
 #define SEARCH_USR_NOT_EXIST "no such people"
 #define SEARCH_USR_ONLINE "online"
 #define SEARCH_USR_OFFLINE "offline"
-//未知系统错误
-#define UNKNOW_ERROR "unknow error"
+#define UNKNOW_ERROR "unknow error"     ////未知系统错误
 #define FRIEND_EXISTED "friend existed"
 #define ADD_FRIEND_OFFLINE "usr offline"
 #define ADD_FRIEND_NOTEXIST "usr not exist"
@@ -19,6 +18,8 @@ typedef unsigned int uint;
 #define DIR_NO_EXIST "dir not exist"
 #define DIR_NAME_EXIST "file name exist"
 #define CREATE_DIR_OK "create dir ok"
+#define DEL_DIR_OK "delete dir ok"
+#define DEL_DIR_FAILED "delete dir failed"
 
 
 //消息类型的枚举
@@ -61,6 +62,9 @@ enum ENUM_MSG_TYPE
 
     ENUM_MSG_TYPE_FLUSH_FILE_REQUEST,       //查看(刷新)文件请求
     ENUM_MSG_TYPE_FLUSH_FILE_RESPOND,       //查看(刷新)文件回复
+
+    ENUM_MSG_TYPE_DEL_DIR_REQUEST,       //删除目录请求
+    ENUM_MSG_TYPE_DEL_DIR_RESPOND,       //删除目录回复
 
     ENUM_MSG_TYPE_MAX = 0x00ffffff,
 

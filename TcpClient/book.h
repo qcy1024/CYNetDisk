@@ -20,6 +20,7 @@ signals:
 public slots:
     void createDir();
     void flushFile();
+    void delDir();
 
 private:
     QListWidget* m_pBookListW;  //显示文件名字的列表
