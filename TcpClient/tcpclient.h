@@ -31,6 +31,7 @@ public:
 
     QString loginName();    //返回m_strLoginName，即用户的登录名字
     QString curPath();      //返回用户当前所在的路径
+    void setCurPath(QString strCurPath);      //设置新的当前所在路径
 
 public slots:
     void showConnect();

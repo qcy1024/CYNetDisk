@@ -77,6 +77,12 @@ QString TcpClient::curPath()
     return m_strCurPath;
 }
 
+//设置新的用户当前所在路径
+void TcpClient::setCurPath(QString strCurPath)
+{
+    m_strCurPath = strCurPath;
+}
+
 void TcpClient::showConnect()
 {
     QMessageBox::information(this,"连接服务器","连接服务器成功");
@@ -122,6 +128,7 @@ void TcpClient::recvMsg()
         {
             if( strcmp(pdu->caData,LOGIN_OK) == 0 )
             {
+                //登录成功后客户端将m_strCurPath的值置为服务器传来的值。
                 m_strCurPath = QString("./%1").arg(m_strLoginName);
                 QMessageBox::information(this,"登录",LOGIN_OK);
                 //操作界面show之后，会新弹出一个操作界面，原来的登录界面不会关闭
@@ -238,16 +245,36 @@ void TcpClient::recvMsg()
             QMessageBox::information(this,"创建文件",pdu->caData);
             break;
         }
+        //刷新(查看)文件回复
         case ENUM_MSG_TYPE_FLUSH_FILE_RESPOND:
         {
             //调用操作界面中的Book界面中的updateFileList()函数
             OpeWidget::getInstance().getBook()->updateFileList(pdu);
+            QString strEnterDir = OpeWidget::getInstance().getBook()->enterDir();
+            if( !strEnterDir.isEmpty() )
+            {
+                m_strCurPath = m_strCurPath + "/" + strEnterDir;
+                qDebug() << "enter dir: " << m_strCurPath;
+            }
             break;
         }
         //删除文件夹回复
         case ENUM_MSG_TYPE_DEL_DIR_RESPOND:
         {
             QMessageBox::information(this,"删除文件夹",pdu->caData);
+        }
+        //文件重命名回复
+        case ENUM_MSG_TYPE_RENAME_FILE_RESPOND:
+        {
+            QMessageBox::information(this,"文件重命名",pdu->caData);
+            break;
+        }
+        //进入文件夹回复
+        case ENUM_MSG_TYPE_ENTER_DIR_RESPOND:
+        {
+            OpeWidget::getInstance().getBook()->clearEnterDir();
+            QMessageBox::information(this,"进入文件夹",pdu->caData);
+            break;
         }
         default:
             break;

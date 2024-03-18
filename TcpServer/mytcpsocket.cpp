@@ -386,6 +386,7 @@ void MyTcpSocket::recvMsg()
             respdu = NULL;
             break;
         }
+        //删除目录请求
         case ENUM_MSG_TYPE_DEL_DIR_REQUEST:
         {
             //客户端发过来的是要删除的路径和文件名，我们首先将路径和文件名拼成一个完整的路径。
@@ -431,6 +432,103 @@ void MyTcpSocket::recvMsg()
             write((char*)respdu,respdu->uiPDULen);
             free(respdu);
             respdu = NULL;
+            break;
+        }
+        //文件重命名请求
+        case ENUM_MSG_TYPE_RENAME_FILE_REQUEST:
+        {
+            char caOldName[32] = {'\0'};
+            char caNewName[32] = {'\0'};
+            strncpy(caOldName,pdu->caData,32);
+            strncpy(caNewName,pdu->caData+32,32);
+            char* pPath = new char[pdu->uiMsgLen];
+            memcpy(pPath,pdu->caMsg,pdu->uiMsgLen);
+            //用QString拼接出两条路径：旧的文件路径和新的文件路径。
+            QString strOldPath = QString("%1/%2").arg(pPath).arg(caOldName);
+            QString strNewPath = QString("%1/%2").arg(pPath).arg(caNewName);
+
+            qDebug() << strOldPath;
+            qDebug() << strNewPath;
+
+            QDir dir;
+            //QDir对象的rename()函数第一个参数为旧的路径，第二个参数为新的路径。
+            bool ret = dir.rename(strOldPath,strNewPath);
+            PDU* respdu = mkPDU(0);
+            respdu->uiMsgType = ENUM_MSG_TYPE_RENAME_FILE_RESPOND;
+            if( ret )
+            {
+                strcpy(respdu->caData,RENAME_FILE_OK);
+            }
+            else
+            {
+                strcpy(respdu->caData,RENAME_FILE_FAILED);
+            }
+            write((char*)respdu,respdu->uiPDULen);
+            free(respdu);
+            respdu = NULL;
+            break;
+        }
+        //进入目录请求
+        case ENUM_MSG_TYPE_ENTER_DIR_REQUEST:
+        {
+            char caEnterName[32] = {'\0'};
+            strncpy(caEnterName,pdu->caData,32);
+            char* pPath = new char[pdu->uiMsgLen];
+            memcpy(pPath,pdu->caMsg,pdu->uiMsgLen);
+
+            QString strPath = QString("%1/%2").arg(pPath).arg(caEnterName);
+
+            qDebug() << strPath;
+
+            QFileInfo fileInfo(strPath);
+            PDU* respdu = NULL;
+
+            //用户传过来的目录确实是一个目录
+            if( fileInfo.isDir() )
+            {
+                QDir dir(strPath);
+                QFileInfoList fileInfoList = dir.entryInfoList();
+                //fileInfoList.size()即得到了该目录下有几个文件
+                int iFileCount = fileInfoList.size();
+                //文件数乘以一个文件的大小，即是整个pdu消息部分的大小。
+                PDU* respdu = mkPDU(sizeof(FileInfo)*iFileCount);
+                //！* ！* ！* ！* * 注意进入目录请求中，若用户传过来的目录合法，则服务端回复的
+                //消息类型是刷新文件回复 * * * ！* ！* ！* ！
+                respdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FILE_RESPOND;
+                FileInfo* pFileInfo = NULL;
+                QString strFileName;
+
+                for( int i=0; i<iFileCount; ++i )
+                {
+                    pFileInfo = (FileInfo*)(respdu->caMsg) + i;
+                    strFileName = fileInfoList[i].fileName();
+                    memcpy(pFileInfo->caFileName,strFileName.toStdString().c_str(),strFileName.size());
+                    if( fileInfoList[i].isDir() )
+                    {
+                        //0表示是一个目录
+                        pFileInfo->iFileType = 0;
+                    }
+                    else if( fileInfoList[i].isFile() )
+                    {
+                        //1表示是一个常规文件
+                        pFileInfo->iFileType = 1;
+                    }
+                }
+
+                write((char*)respdu,respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+            }
+            //用户传过来的路径是一个常规文件
+            else if( fileInfo.isFile() )
+            {
+                respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_ENTER_DIR_RESPOND;
+                strcpy(respdu->caData,ENTER_DIR_FAILED);
+                write((char*)respdu,respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+            }
             break;
         }
         default:
