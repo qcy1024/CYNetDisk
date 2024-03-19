@@ -5,6 +5,7 @@
 #include <QDir>
 #include "protocol.h"
 #include "opedb.h"
+#include <QFile>
 
 //MyTcpSocket继承了QTcpSocket,可以直接用QTcpSocket提供的功能。
 class MyTcpSocket : public QTcpSocket
@@ -29,6 +30,11 @@ private:
     //不是的。因为每一个用户在登录时都会创建一个不同的myTcpSocket对象，每个
     //不同的myTcpSocket对象都有着自己的m_strName成员。
     QString m_strName;
+
+    QFile m_file;
+    qint64 m_iTotal;    //文件总大小
+    qint64 m_iRecved;   //文件已经接收了的大小
+    bool m_bUpload;    //判断是否处于上传文件状态,在构造函数中被置为false
 };
 
 #endif // MYTCPSOCKET_H

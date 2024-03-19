@@ -24,6 +24,8 @@ typedef unsigned int uint;
 #define RENAME_FILE_FAILED "rename file failed"
 #define ENTER_DIR_FAILED "enter dir failed"
 #define ENTER_DIR_OK "enter dir ok"
+#define UPLOAD_FILE_OK "upload file ok"
+#define UPLOAD_FILE_FAILED "upload file failed"
 
 //消息类型的枚举
 enum ENUM_MSG_TYPE
@@ -74,6 +76,9 @@ enum ENUM_MSG_TYPE
 
     ENUM_MSG_TYPE_ENTER_DIR_REQUEST,    //进入文件夹请求
     ENUM_MSG_TYPE_ENTER_DIR_RESPOND,    //进入文件夹回复
+
+    ENUM_MSG_TYPE_UPLOAD_FILE_REQUEST,  //上传文件请求
+    ENUM_MSG_TYPE_UPLOAD_FILE_RESPOND,  //上传文件请求
 
     ENUM_MSG_TYPE_MAX = 0x00ffffff,
 

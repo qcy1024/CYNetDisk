@@ -8,6 +8,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "protocol.h"
+#include <QTimer>
 
 class Book : public QWidget
 {
@@ -27,6 +28,10 @@ public slots:
     //槽函数的形参要与信号的形参保持一致
     void enterDir(const QModelIndex& index);
     void returnPre();       //返回按钮
+    void uploadFile();      //上传文件按钮
+
+    void uploadFileData();  //发送文件数据(二进制)
+
 private:
     QListWidget* m_pBookListW;  //显示文件名字的列表
 
@@ -42,6 +47,10 @@ private:
 
     //该变量在用户双击进入某一目录时被置值
     QString m_strEnterDir;      //用户双击某一目录时，要进入的目录路径
+
+    QString m_strUploadFilePath;    //上传文件时，用来保存用户选择的路径
+
+    QTimer* m_pTimer;
 };
 
 #endif // BOOK_H

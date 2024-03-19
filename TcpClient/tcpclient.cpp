@@ -276,6 +276,12 @@ void TcpClient::recvMsg()
             QMessageBox::information(this,"进入文件夹",pdu->caData);
             break;
         }
+        //上传文件回复
+        case ENUM_MSG_TYPE_UPLOAD_FILE_RESPOND:
+        {
+            QMessageBox::information(this,"上传文件",pdu->caData);
+            break;
+        }
         default:
             break;
     }//end of switch(pdu->uiMsgType)

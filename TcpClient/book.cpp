@@ -2,11 +2,14 @@
 #include "tcpclient.h"
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QFileDialog>
 
 Book::Book(QWidget *parent)
     : QWidget{parent}
 {
     m_strEnterDir.clear();
+
+    m_pTimer = new QTimer;
 
     m_pBookListW = new QListWidget;
     m_pReturnPB = new QPushButton("返回");
@@ -57,6 +60,12 @@ Book::Book(QWidget *parent)
 
     connect(m_pReturnPB,SIGNAL(clicked(bool))
             ,this,SLOT(returnPre()));
+
+    connect(m_pUploadPB,SIGNAL(clicked(bool))
+            ,this,SLOT(uploadFile()));
+
+    connect(m_pTimer,SIGNAL(timeout())
+            ,this,SLOT(uploadFileData()));
 }
 
 void Book::updateFileList(const PDU *pdu)
@@ -274,6 +283,88 @@ void Book::returnPre()
 
     }
 
+}
+
+//"上传文件"按钮槽函数
+void Book::uploadFile()
+{
+    QString strCurPath = TcpClient::getInstance().curPath();
+    //这个函数会弹出一个打开文件的窗口，我们选择
+    //一个文件之后，函数就会返回我们选择的文件的(绝对)路径
+    m_strUploadFilePath = QFileDialog::getOpenFileName();
+
+    qDebug() << m_strUploadFilePath;
+
+    //我们只需要上传文件名字，需要在绝对路径中把名字提取出来
+    //把文件名字、文件大小和用户当前所在路径通过pdu传到服务器
+    if( !m_strUploadFilePath.isEmpty() )
+    {
+        //注意lastIndexOf是QString的类方法。
+        int index = m_strUploadFilePath.lastIndexOf('/');
+        QString strFileName = m_strUploadFilePath.right(m_strUploadFilePath.size()-index-1);
+        qDebug() << strFileName;
+        //定义一个QFile对象，把文件的绝对路径传进去
+        QFile file(m_strUploadFilePath);
+        //定义一个变量fileSize,保存文件的大小
+        qint64 fileSize = file.size();
+        //用户的当前所在路径放在uiMsg里面
+        PDU* pdu = mkPDU(strCurPath.size()+1);
+        pdu->uiMsgType = ENUM_MSG_TYPE_UPLOAD_FILE_REQUEST;
+        memcpy(pdu->caMsg,strCurPath.toStdString().c_str(),strCurPath.size());
+        //用户要上传的文件的文件名的文件大小放在caData里面。
+        sprintf(pdu->caData,"%s %lld",strFileName.toStdString().c_str(),fileSize);
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+        free(pdu);
+        pdu = NULL;
+
+        //定时器计时1000ms，到时间就会触发timeout信号。
+        m_pTimer->start(1000);
+
+    }
+    else
+    {
+        QMessageBox::warning(this,"上传文件","文件不能为空");
+    }
+
+
+}
+
+//定时器到时的槽函数(开始上传文件二进制数据)
+void Book::uploadFileData()
+{
+    m_pTimer->stop();   //如果不手动停止计时器，计时器就会重新计时
+    //m_strUploadFilePath是要上传的文件的绝对路径
+    QFile file(m_strUploadFilePath);
+    if( !file.open(QIODevice::ReadOnly) )
+    {
+        QMessageBox::warning(this,"上传文件","打开文件失败");
+        return ;
+    }
+    //每次读写数据多大性能最高？经过前人的多次测试，得到这个4096.
+    char* pBuffer = new char[4096];
+    qint64 ret = 0;
+    while( true )
+    {
+        //读4096个字节到pBuffer所指示的位置处，read返回实际读到的字节数
+        ret = file.read(pBuffer,4096);
+        if( ret > 0 && ret <= 4096 )
+        {
+            //直接用socket二进制地传文件。
+            TcpClient::getInstance().getTcpSocket().write((char*)pBuffer,ret);
+        }
+        else if( ret == 0)
+        {
+            break;
+        }
+        else
+        {
+            QMessageBox::warning(this,"上传文件","上传文件失败:读文件失败");
+            break;
+        }
+    }
+    file.close();
+    delete [] pBuffer;
+    pBuffer = NULL;
 }
 
 
