@@ -26,6 +26,8 @@ typedef unsigned int uint;
 #define ENTER_DIR_OK "enter dir ok"
 #define UPLOAD_FILE_OK "upload file ok"
 #define UPLOAD_FILE_FAILED "upload file failed"
+#define DEL_FILE_OK "delete file ok"
+#define DEL_FILE_FAILED "delete file failed"
 
 //消息类型的枚举
 enum ENUM_MSG_TYPE
@@ -78,7 +80,13 @@ enum ENUM_MSG_TYPE
     ENUM_MSG_TYPE_ENTER_DIR_RESPOND,    //进入文件夹回复
 
     ENUM_MSG_TYPE_UPLOAD_FILE_REQUEST,  //上传文件请求
-    ENUM_MSG_TYPE_UPLOAD_FILE_RESPOND,  //上传文件请求
+    ENUM_MSG_TYPE_UPLOAD_FILE_RESPOND,  //上传文件回复
+
+    ENUM_MSG_TYPE_DEL_FILE_REQUEST,     //删除常规文件请求
+    ENUM_MSG_TYPE_DEL_FILE_RESPOND,     //删除常规文件回复
+
+    ENUM_MSG_TYPE_DOWNLOAD_FILE_REQUEST,  //下载文件请求
+    ENUM_MSG_TYPE_DOWNLOAD_FILE_RESPOND,  //下载文件回复
 
     ENUM_MSG_TYPE_MAX = 0x00ffffff,
 

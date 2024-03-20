@@ -62,5 +62,7 @@ private:
 
     //用户当前的路径
     QString m_strCurPath;
+
+    QFile m_file;
 };
 #endif // TCPCLIENT_H

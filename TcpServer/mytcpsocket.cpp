@@ -17,6 +17,11 @@ MyTcpSocket::MyTcpSocket(QObject *parent)
     connect(this,SIGNAL(disconnected()),this,SLOT(clientOffline()));
 
     m_bUpload = false;
+    m_pTimer = new QTimer;
+    connect(m_pTimer,SIGNAL(timeout())
+            ,this,SLOT(sendFileToClient()));
+
+
 }
 
 //返回这个登录用户的name(每一个用户在登录时都会创建一个不同的MyTcpSocket对象)
@@ -425,14 +430,14 @@ void MyTcpSocket::recvMsg()
                 //删除成功
                 if( ret )
                 {
-                    respdu = mkPDU(strlen(DEL_DIR_OK+1));
+                    respdu = mkPDU(strlen(DEL_DIR_OK)+1);
                     respdu->uiMsgType = ENUM_MSG_TYPE_DEL_DIR_RESPOND;
                     memcpy(respdu->caData,DEL_DIR_OK,strlen(DEL_DIR_OK));
                 }
                 //删除失败
                 else
                 {
-                    respdu = mkPDU(strlen(DEL_DIR_OK+1));
+                    respdu = mkPDU(strlen(DEL_DIR_OK)+1);
                     respdu->uiMsgType = ENUM_MSG_TYPE_DEL_DIR_RESPOND;
                     memcpy(respdu->caData,DEL_DIR_FAILED,strlen(DEL_DIR_FAILED));
                 }
@@ -552,7 +557,7 @@ void MyTcpSocket::recvMsg()
                 //将路径和文件名拼成一个路径
                 QString strPath = QString("%1/%2").arg(pPath).arg(caFileName);
 
-                qDebug() << strPath;
+                //qDebug() << strPath;
 
                 delete [] pPath;
                 pPath = NULL;
@@ -567,6 +572,83 @@ void MyTcpSocket::recvMsg()
                     m_iRecved = 0;          //已接收的文件大小
 
                 }
+                break;
+            }
+            //删除常规文件请求
+            case ENUM_MSG_TYPE_DEL_FILE_REQUEST:
+            {
+                //客户端发过来的是要删除的路径和文件名，我们首先将路径和文件名拼成一个完整的路径。
+                char caName[64] = {'\0'};
+                strcpy(caName,pdu->caData);
+                //pdu->uiMsgLen是客户端传来的路径的长度
+                char* pPath = new char[pdu->uiMsgLen];
+                memcpy(pPath,pdu->caMsg,pdu->uiMsgLen);
+                QString strPath = QString("%1/%2").arg(pPath).arg(caName);
+                //qDebug() << strPath;
+                //产生一个QFileInfo对象，用该对象来判断该路径是不是一个目录
+                QFileInfo fileInfo(strPath);
+                bool ret = false;
+                //strPath是一个目录
+                if( fileInfo.isDir() )
+                {
+                    //不删除
+                    ret = false;
+
+                }
+                //strPath是一个常规文件
+                else if( fileInfo.isFile() )
+                {
+                    QDir dir;
+                    //删除常规文件使用remove()函数,remove()返回bool值标志删除是否成功。
+                    ret = dir.remove(strPath);
+                }
+                PDU* respdu = NULL;
+                //删除成功
+                if( ret )
+                {
+                    respdu = mkPDU(strlen(DEL_FILE_OK)+1);
+                    respdu->uiMsgType = ENUM_MSG_TYPE_DEL_FILE_RESPOND;
+                    memcpy(respdu->caData,DEL_FILE_OK,strlen(DEL_FILE_OK));
+                }
+                //删除失败
+                else
+                {
+                    respdu = mkPDU(strlen(DEL_FILE_OK)+1);
+                    respdu->uiMsgType = ENUM_MSG_TYPE_DEL_FILE_RESPOND;
+                    memcpy(respdu->caData,DEL_FILE_FAILED,strlen(DEL_FILE_FAILED));
+                }
+                write((char*)respdu,respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+                break;
+            }
+            //下载文件请求
+            case ENUM_MSG_TYPE_DOWNLOAD_FILE_REQUEST:
+            {
+                //存放客户端传来的文件名
+                char caFileName[64] = {'\0'};
+                strcpy(caFileName,pdu->caData);
+                //存放客户端传来的用户当前所在路径
+                char* pPath = new char[pdu->uiMsgLen];
+                memcpy(pPath,pdu->caMsg,pdu->uiMsgLen);
+                //将路径和文件名拼成一个路径,这个路径就是客户端要下载的那个文件路径。
+                QString strPath = QString("%1/%2").arg(pPath).arg(caFileName);
+                delete [] pPath;
+                pPath = NULL;
+
+                QFileInfo fileInfo(strPath);
+                qint64 fileSize = fileInfo.size();
+                PDU* respdu = mkPDU(0);
+                respdu->uiMsgType = ENUM_MSG_TYPE_DOWNLOAD_FILE_RESPOND;
+                sprintf(respdu->caData,"%s %lld",caFileName,fileSize);
+                write((char*)respdu,respdu->uiPDULen);
+                free(respdu);
+                respdu = NULL;
+                qDebug() << "strPath为" << strPath;
+                m_file.setFileName(strPath);
+                qDebug() << "打开文件成功与失败:" << m_file.open(QIODevice::ReadOnly);
+                //在给客户回复完之后，启动一个计时器，1秒后开始向客户发送文件数据
+                m_pTimer->start(1000);
                 break;
             }
             default:
@@ -616,6 +698,42 @@ void MyTcpSocket::clientOffline()
     OpeDB::getInstance().handleOffline(m_strName.toStdString().c_str());
     //发出信号offline
     emit offline(this);
+}
+
+//计时器到时，向客户端发送文件数据
+void MyTcpSocket::sendFileToClient()
+{
+    m_pTimer->stop();
+    char* pData = new char[4097];
+    qint64 ret = 0;
+    while( true )
+    {
+        ret = m_file.read(pData,4096);
+        //qDebug() << "ret = " << ret;
+        if( ret > 0 && ret <= 4096 )
+        {
+            write(pData,ret);
+        }
+        //文件已经发送完了
+        else if( ret == 0 )
+        {
+            //qDebug() << "here";
+            m_file.close();
+            //qDebug() << "heredd";
+            break;
+            //qDebug() << "heredddddd";
+        }
+        else if( ret < 0 )
+        {
+            qDebug() << "发送文件内容给客户端过程中失败";
+            //qDebug() << m_file.errorString();//Unknown error
+            m_file.close();
+            break;
+        }
+    }
+    //qDebug() << "循环结束了！" ;
+    delete [] pData;
+    pData = NULL;
 }
 
 

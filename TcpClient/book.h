@@ -18,6 +18,17 @@ public:
     void updateFileList(const PDU* pdu);
     void clearEnterDir();
     QString enterDir();
+    void setDownloadStatus(bool status);
+    bool getDownloadStatus();
+    QString getSaveFilePath();
+
+
+
+    //为了省事就写成公有的了
+    qint64 m_iTotal;    //要下载的文件总大小
+    qint64 m_iRecved;   //已经接收了的大小
+
+
 signals:
 
 public slots:
@@ -31,6 +42,8 @@ public slots:
     void uploadFile();      //上传文件按钮
 
     void uploadFileData();  //发送文件数据(二进制)
+    void delRegFile();      //删除常规文件
+    void downloadFile();    //下载文件
 
 private:
     QListWidget* m_pBookListW;  //显示文件名字的列表
@@ -51,6 +64,12 @@ private:
     QString m_strUploadFilePath;    //上传文件时，用来保存用户选择的路径
 
     QTimer* m_pTimer;
+
+    QString m_strSaveFilePath;  //下载文件时保存文件的路径,该变量在用户下载文件选完保存路径时被赋值
+    bool m_bDownload;           //是否处于下载状态
+
+
+
 };
 
 #endif // BOOK_H

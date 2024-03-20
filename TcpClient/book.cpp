@@ -9,7 +9,9 @@ Book::Book(QWidget *parent)
 {
     m_strEnterDir.clear();
 
+    m_bDownload = false;
     m_pTimer = new QTimer;
+
 
     m_pBookListW = new QListWidget;
     m_pReturnPB = new QPushButton("返回");
@@ -66,6 +68,13 @@ Book::Book(QWidget *parent)
 
     connect(m_pTimer,SIGNAL(timeout())
             ,this,SLOT(uploadFileData()));
+
+    connect(m_pDelFilePB,SIGNAL(clicked(bool))
+            ,this,SLOT(delRegFile()));
+
+    connect(m_pDownloadPB,SIGNAL(clicked(bool))
+            ,this,SLOT(downloadFile()));
+
 }
 
 void Book::updateFileList(const PDU *pdu)
@@ -117,6 +126,21 @@ void Book::clearEnterDir()
 QString Book::enterDir()
 {
     return m_strEnterDir;
+}
+
+void Book::setDownloadStatus(bool status)
+{
+    m_bDownload = status;
+}
+
+bool Book::getDownloadStatus()
+{
+    return m_bDownload;
+}
+
+QString Book::getSaveFilePath()
+{
+    return m_strSaveFilePath;
 }
 
 //点击"新建文件夹"按钮的槽函数
@@ -365,6 +389,73 @@ void Book::uploadFileData()
     file.close();
     delete [] pBuffer;
     pBuffer = NULL;
+}
+
+//删除常规文件
+void Book::delRegFile()
+{
+    //获得当前所在目录
+    QString strCurPath = TcpClient::getInstance().curPath();
+    //获得界面上当前选中的内容
+    QListWidgetItem* pItem = m_pBookListW->currentItem();
+    //当前没有选中内容
+    if( pItem == NULL )
+    {
+        QMessageBox::warning(this,"删除文件","请选择要删除的文件");
+    }
+    //当前选中了内容
+    else
+    {
+        //获得所选中的内容的名字的字符串
+        QString strDelName = pItem->text();
+        PDU* pdu = mkPDU(strCurPath.size()+1);
+        pdu->uiMsgType = ENUM_MSG_TYPE_DEL_FILE_REQUEST;
+        //要删除的名字放在caData里面
+        strncpy(pdu->caData,strDelName.toStdString().c_str(),strDelName.size());
+        //要删除的路径放在caMsg里面
+        memcpy(pdu->caMsg,strCurPath.toStdString().c_str(),strCurPath.size());
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+        free(pdu);
+        pdu = NULL;
+    }
+}
+
+//下载文件槽函数
+void Book::downloadFile()
+{
+    //获得界面上当前选中的内容
+    QListWidgetItem* pItem = m_pBookListW->currentItem();
+    //当前没有选中内容
+    if( pItem == NULL )
+    {
+        QMessageBox::warning(this,"下载文件","请选择要下载的文件");
+    }
+    //当前选中了内容
+    else
+    {
+        //QFileDialog::getSaveFileName()函数会弹出一个窗口，让用户选择一个路径，返回值就是该路径
+        QString strSaveFilePath = QFileDialog::getSaveFileName();
+        if( strSaveFilePath.isEmpty() )
+        {
+            QMessageBox::warning(this,"下载文件","请指定要保存的位置");
+            m_strSaveFilePath.clear();
+        }
+        else
+        {
+            m_strSaveFilePath = strSaveFilePath;
+
+        }
+        //客户端向服务器发送当前所在路径以及要下载的文件名
+        QString strCurPath = TcpClient::getInstance().curPath();
+        PDU* pdu = mkPDU(strCurPath.size()+1);
+        pdu->uiMsgType = ENUM_MSG_TYPE_DOWNLOAD_FILE_REQUEST;
+        QString strFileName = pItem->text();
+        strcpy(pdu->caData,strFileName.toStdString().c_str());
+        memcpy(pdu->caMsg,strCurPath.toStdString().c_str(),strCurPath.size());
+        TcpClient::getInstance().getTcpSocket().write((char*)pdu,pdu->uiPDULen);
+
+
+    }
 }
 
 

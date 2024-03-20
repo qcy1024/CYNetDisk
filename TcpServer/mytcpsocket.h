@@ -6,6 +6,7 @@
 #include "protocol.h"
 #include "opedb.h"
 #include <QFile>
+#include <QTimer>
 
 //MyTcpSocket继承了QTcpSocket,可以直接用QTcpSocket提供的功能。
 class MyTcpSocket : public QTcpSocket
@@ -24,6 +25,7 @@ signals:
 public slots:
     void recvMsg();
     void clientOffline();   //处理客户端下线
+    void sendFileToClient();    //槽函数，用于发送文件给客户端
 
 private:
     //保存登录的用户的name(这个项目是不是只支持单连接？)
@@ -35,6 +37,7 @@ private:
     qint64 m_iTotal;    //文件总大小
     qint64 m_iRecved;   //文件已经接收了的大小
     bool m_bUpload;    //判断是否处于上传文件状态,在构造函数中被置为false
+    QTimer* m_pTimer;
 };
 
 #endif // MYTCPSOCKET_H
